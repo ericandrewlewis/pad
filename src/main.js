@@ -13,8 +13,16 @@ const style = {
 class App extends Component {
   constructor() {
     super()
+
+    let pages
+    if (localStorage.getItem("padContent")) {
+      pages = JSON.parse(localStorage.getItem("padContent"))
+    } else {
+      pages = [schema.parseDOM(document.createTextNode('')).toJSON()]
+    }
+    console.log(pages)
     this.state = {
-      pages: [schema.parseDOM(document.createTextNode('')).toJSON()],
+      pages: pages,
       currentPageIndex: 0,
       selection: undefined
     }
@@ -32,6 +40,7 @@ class App extends Component {
       pages: pages,
       selection: selection
     })
+    localStorage.setItem("padContent", JSON.stringify([doc]));
   }
 
   render() {
