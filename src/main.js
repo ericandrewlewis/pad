@@ -18,7 +18,9 @@ class App extends Component {
     if (localStorage.getItem("padContent")) {
       pages = JSON.parse(localStorage.getItem("padContent"))
     } else {
-      pages = [schema.parseDOM(document.createTextNode('')).toJSON()]
+      let node = document.createElement('p')
+      node.textContent = 'Here\'s your first page.'
+      pages = [schema.parseDOM(node).toJSON()]
     }
     this.state = {
       pages: pages,
