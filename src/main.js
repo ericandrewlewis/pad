@@ -20,7 +20,6 @@ class App extends Component {
     } else {
       pages = [schema.parseDOM(document.createTextNode('')).toJSON()]
     }
-    console.log(pages)
     this.state = {
       pages: pages,
       currentPageIndex: 0,
