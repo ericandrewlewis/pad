@@ -7,7 +7,7 @@ import {tooltipMenu, menuBar} from "prosemirror/dist/menu"
 
 var {any, func, bool, string, oneOf} = PropTypes;
 
-export default class ProseMirror extends Component {
+export default class Editor extends Component {
   constructor() {
     super()
     this.onSelectionChange = this.onSelectionChange.bind(this)
@@ -20,10 +20,10 @@ export default class ProseMirror extends Component {
   _mountEditor() {
     const {doc, options} = this.props;
     this.editorNode = this.refs.editorNode;
-    this.editor = new prosemirror.ProseMirror({
+    this.editor = window.pm = new prosemirror.ProseMirror({
         place: this.editorNode,
-        schema,
-        doc,
+        doc: schema.nodeFromJSON(doc),
+        schema: schema,
         plugins: [exampleSetup.config({menuBar: false, tooltipMenu: false})]
       }
     );
@@ -74,7 +74,6 @@ export default class ProseMirror extends Component {
   }
 
   onChange() {
-    console.log('hi')
   }
 
   onSelectionChange() {
@@ -90,18 +89,18 @@ export default class ProseMirror extends Component {
   render() {
     var {doc, selection, onChange, options, children} = this.props;
     return (
-      <div ref="editorNode"></div>
+      <div className="editor" ref="editorNode"></div>
     );
   }
 }
 
-ProseMirror.propTypes = {
+Editor.propTypes = {
   doc: any,
   selection: any,
   onChange: func,
   options: any
 };
 
-ProseMirror.defaultProps = {
+Editor.defaultProps = {
   options: {}
 };

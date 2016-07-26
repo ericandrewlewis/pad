@@ -1,7 +1,8 @@
 import React, {Component, PropTypes} from "react";
 import ReactDOM from 'react-dom';
-import autobind from 'autobind-decorator';
-import ProseMirror from "./prosemirror-react-component";
+import {schema} from 'prosemirror/dist/schema-basic';
+import PageBrowser from "./PageBrowser";
+import Editor from "./editor";
 
 var {number, string} = PropTypes;
 const style = {
@@ -9,34 +10,39 @@ const style = {
   minHeight: '200px'
 };
 
-class Hello extends Component {
+class App extends Component {
   constructor() {
     super()
+    this.state = {
+      pages: [schema.parseDOM(document.createTextNode('')).toJSON()],
+      currentPageIndex: 0,
+      selection: undefined
+    }
     this.onChange = this.onChange.bind(this)
   }
+
   componentWillMount() {
     this.setState({doc: undefined, selection: undefined});
   }
 
   onChange(doc, selection) {
-    console.log('onChange: ', doc, selection);
-    this.setState({doc, selection})
+    let {pages, currentPageIndex} = this.state
+    pages[currentPageIndex] = doc
+    this.setState({
+      pages: pages,
+      selection: selection
+    })
   }
 
   render() {
-    const {doc, selection} = this.state;
-    var prettifiedDoc = undefined;
-    try {
-      prettifiedDoc = JSON.stringify(doc, null, 4).split('\n')
-        .map(string=>("    " + string)).join('\n').slice(4);
-    } catch (e) {
-      console.log(e);
-    }
+    const {pages, currentPageIndex, selection} = this.state;
+    let doc = pages[currentPageIndex];
     return (
       <div>
-        <ProseMirror style={style} onChange={this.onChange} doc={doc} selection={selection}/>
+        <PageBrowser currentPageIndex={currentPageIndex} pages={pages} />
+        <Editor style={style} onChange={this.onChange} doc={doc} selection={selection}/>
       </div>
     );
   }
 }
-ReactDOM.render(<Hello />, document.getElementById('editor'))
+ReactDOM.render(<App />, document.querySelector('.app'))
