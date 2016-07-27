@@ -1,8 +1,9 @@
 import React, {Component, PropTypes} from "react";
 import ReactDOM from 'react-dom';
-import {schema} from 'prosemirror/dist/schema-basic';
+import {schema} from './editor-schema';
 import PageBrowser from "./PageBrowser";
 import Editor from "./Editor";
+import update from 'react-addons-update'
 
 var {number, string} = PropTypes;
 const style = {
@@ -18,9 +19,12 @@ class App extends Component {
     if (localStorage.getItem("padContent")) {
       pages = JSON.parse(localStorage.getItem("padContent"))
     } else {
-      let node = document.createElement('p')
-      node.textContent = 'Here\'s your first page.'
-      pages = [schema.parseDOM(node).toJSON()]
+      let doc = schema.nodes.doc.create( {id: new Date().getTime()},
+        schema.nodes.paragraph.create( {},
+          schema.nodes.text.create({}, 'Write here.')
+        )
+      ).toJSON()
+      pages = [doc]
     }
     this.state = {
       pages: pages,
@@ -28,6 +32,8 @@ class App extends Component {
       selection: undefined
     }
     this.onChange = this.onChange.bind(this)
+    this.createNewPage = this.createNewPage.bind(this)
+    this.setCurrentDocument = this.setCurrentDocument.bind(this)
   }
 
   componentWillMount() {
@@ -35,13 +41,30 @@ class App extends Component {
   }
 
   onChange(doc, selection) {
-    let {pages, currentPageIndex} = this.state
-    pages[currentPageIndex] = doc
-    this.setState({
-      pages: pages,
-      selection: selection
+    let {currentPageIndex} = this.state
+    this.setState(update(this.state, {
+      pages: {$splice: [[currentPageIndex, 1, doc]]},
+    }))
+    localStorage.setItem("padContent", JSON.stringify(this.state.pages));
+  }
+
+  createNewPage() {
+    let doc = schema.nodes.doc.create( {id: new Date().getTime()},
+      schema.nodes.paragraph.create( {},
+        schema.nodes.text.create({}, 'Write here.')
+      )
+    ).toJSON()
+    let state = update(this.state, {
+      pages: {
+        $unshift: [doc]
+      }
     })
-    localStorage.setItem("padContent", JSON.stringify([doc]));
+
+    this.setState(state)
+  }
+
+  setCurrentDocument(index) {
+    this.setState({currentPageIndex: index})
   }
 
   render() {
@@ -49,7 +72,11 @@ class App extends Component {
     let doc = pages[currentPageIndex];
     return (
       <div>
-        <PageBrowser currentPageIndex={currentPageIndex} pages={pages} />
+        <PageBrowser currentPageIndex={currentPageIndex}
+                     pages={pages}
+                     onClickCreateNew={this.createNewPage}
+                     onClickPage={this.setCurrentDocument}
+                     currentPageIndex={currentPageIndex} />
         <Editor style={style} onChange={this.onChange} doc={doc} selection={selection}/>
       </div>
     );

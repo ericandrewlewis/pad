@@ -11,6 +11,10 @@ html {
   width: 350px;
 }
 
+button {
+  cursor: pointer;
+}
+
 .editor {
   position: absolute;
   margin-left: 350px;
@@ -34,6 +38,22 @@ html {
   word-wrap:break-word;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
+}
+.page-list-item:hover {
+  background-color: #faf7f2;
+}
+
+.page-list-item:hover:before {
+  border-color: #faf7f2;
+}
+
+.page-list-item.selected {
+  background-color: #f2f0ed;
+}
+
+.page-list-item.selected:before {
+  border-color: #f2f0ed;
 }
 
 .page-list-item:before {

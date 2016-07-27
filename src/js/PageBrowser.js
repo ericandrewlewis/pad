@@ -1,7 +1,4 @@
-import React, {Component} from "react";
-import {node} from "prosemirror/dist/model/to_dom"
-import {schema} from 'prosemirror/dist/schema-basic'
-import {nodeToDOM} from "prosemirror/dist/model/to_dom"
+import React, {Component} from "react"
 
 let nodeToText = (node) => {
   let content = ''
@@ -15,6 +12,7 @@ let nodeToText = (node) => {
   }
   return content
 }
+
 class PageListItem extends Component {
   render () {
     let {doc} = this.props
@@ -22,7 +20,8 @@ class PageListItem extends Component {
     if (doc.length > 300) {
       doc = doc.substring(0, 100)
     }
-    return (<div className="page-list-item">{doc}</div>)
+    let className = 'page-list-item' + (this.props.selected ? ' selected' : '')
+    return (<div onClick={this.props.onClick} className={className}>{doc}</div>)
   }
 }
 
@@ -34,10 +33,11 @@ export default class PageBrowser extends Component {
   render() {
     let {pages, currentPageIndex} = this.props
     let pageListItems = pages.map((page, index) => {
-      return <PageListItem key={index} doc={page} />
+      let selected = currentPageIndex === index
+      return <PageListItem selected={selected} onClick={this.props.onClickPage.bind(this, index)} key={index} doc={page} />
     })
     return (<div className="page-browser">
-      <h2>Pages</h2>
+      <h2>Pages<button onClick={this.props.onClickCreateNew} style={{marginLeft: '10px'}}>New Page</button></h2>
       {pageListItems}
     </div>)
   }

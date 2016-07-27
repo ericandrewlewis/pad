@@ -1,7 +1,7 @@
 import React, {Component, PropTypes} from 'react';
 import {findDOMNode} from 'react-dom';
 import prosemirror from 'prosemirror'
-import {schema} from 'prosemirror/dist/schema-basic';
+import {schema} from './editor-schema';
 import {exampleSetup, buildMenuItems} from "prosemirror/dist/example-setup"
 import {menuBar} from "prosemirror/dist/menu"
 
@@ -17,9 +17,13 @@ export default class Editor extends Component {
     this.setState({currentIndex: 0});
   }
 
-  _mountEditor() {
-    const {doc, options} = this.props;
+  _mountEditor(overrides) {
+    let {doc, options} = this.props;
+    if (overrides && overrides.doc) {
+      doc = overrides.doc
+    }
     this.editorNode = this.refs.editorNode;
+
     this.editor = window.pm = new prosemirror.ProseMirror({
         place: this.editorNode,
         doc: schema.nodeFromJSON(doc),
@@ -40,18 +44,16 @@ export default class Editor extends Component {
     this._mountEditor()
   }
 
+  // If a different document is passed,
+  // initialize a new ProseMirror instance.
   componentWillReceiveProps(props) {
     const {doc, selection, options} = props;
-    if (doc !== this.props.doc || selection !== this.props.selection) {
-      console.log('update doc -------------');
-      // todo: more conservative update
-      this._updateEditor(doc, selection)
-    }
-    if (options !== this.props.options) {
-      console.log('update options =============');
+
+    if (this.props.doc.attrs.id !== props.doc.attrs.id) {
       this._removeProseMirror();
-      this._mountEditor()
-    }
+      this._mountEditor(props);
+      return;
+    } else {}
   }
 
   componentWillUnmount() {
