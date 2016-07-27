@@ -56,17 +56,23 @@
 
 	var _reactDom2 = _interopRequireDefault(_reactDom);
 
-	var _schemaBasic = __webpack_require__(172);
+	var _editorSchema = __webpack_require__(172);
 
-	var _PageBrowser = __webpack_require__(188);
+	var _PageBrowser = __webpack_require__(189);
 
 	var _PageBrowser2 = _interopRequireDefault(_PageBrowser);
 
-	var _editor = __webpack_require__(189);
+	var _Editor = __webpack_require__(190);
 
-	var _editor2 = _interopRequireDefault(_editor);
+	var _Editor2 = _interopRequireDefault(_Editor);
+
+	var _reactAddonsUpdate = __webpack_require__(239);
+
+	var _reactAddonsUpdate2 = _interopRequireDefault(_reactAddonsUpdate);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -94,9 +100,8 @@
 	    if (localStorage.getItem("padContent")) {
 	      pages = JSON.parse(localStorage.getItem("padContent"));
 	    } else {
-	      var node = document.createElement('p');
-	      node.textContent = 'Here\'s your first page.';
-	      pages = [_schemaBasic.schema.parseDOM(node).toJSON()];
+	      var doc = _editorSchema.schema.nodes.doc.create({ id: new Date().getTime() }, _editorSchema.schema.nodes.paragraph.create({}, _editorSchema.schema.nodes.text.create({}, 'Write here.'))).toJSON();
+	      pages = [doc];
 	    }
 	    _this.state = {
 	      pages: pages,
@@ -104,6 +109,8 @@
 	      selection: undefined
 	    };
 	    _this.onChange = _this.onChange.bind(_this);
+	    _this.createNewPage = _this.createNewPage.bind(_this);
+	    _this.setCurrentDocument = _this.setCurrentDocument.bind(_this);
 	    return _this;
 	  }
 
@@ -115,31 +122,48 @@
 	  }, {
 	    key: 'onChange',
 	    value: function onChange(doc, selection) {
-	      var _state = this.state;
-	      var pages = _state.pages;
-	      var currentPageIndex = _state.currentPageIndex;
+	      var currentPageIndex = this.state.currentPageIndex;
 
-	      pages[currentPageIndex] = doc;
-	      this.setState({
-	        pages: pages,
-	        selection: selection
+	      this.setState((0, _reactAddonsUpdate2.default)(this.state, {
+	        pages: { $splice: [[currentPageIndex, 1, doc]] }
+	      }));
+	      localStorage.setItem("padContent", JSON.stringify(this.state.pages));
+	    }
+	  }, {
+	    key: 'createNewPage',
+	    value: function createNewPage() {
+	      var doc = _editorSchema.schema.nodes.doc.create({ id: new Date().getTime() }, _editorSchema.schema.nodes.paragraph.create({}, _editorSchema.schema.nodes.text.create({}, 'Write here.'))).toJSON();
+	      var state = (0, _reactAddonsUpdate2.default)(this.state, {
+	        pages: {
+	          $unshift: [doc]
+	        }
 	      });
-	      localStorage.setItem("padContent", JSON.stringify([doc]));
+
+	      this.setState(state);
+	    }
+	  }, {
+	    key: 'setCurrentDocument',
+	    value: function setCurrentDocument(index) {
+	      this.setState({ currentPageIndex: index });
 	    }
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      var _state2 = this.state;
-	      var pages = _state2.pages;
-	      var currentPageIndex = _state2.currentPageIndex;
-	      var selection = _state2.selection;
+	      var _state = this.state;
+	      var pages = _state.pages;
+	      var currentPageIndex = _state.currentPageIndex;
+	      var selection = _state.selection;
 
 	      var doc = pages[currentPageIndex];
 	      return _react2.default.createElement(
 	        'div',
 	        null,
-	        _react2.default.createElement(_PageBrowser2.default, { currentPageIndex: currentPageIndex, pages: pages }),
-	        _react2.default.createElement(_editor2.default, { style: style, onChange: this.onChange, doc: doc, selection: selection })
+	        _react2.default.createElement(_PageBrowser2.default, _defineProperty({ currentPageIndex: currentPageIndex,
+	          pages: pages,
+	          onClickCreateNew: this.createNewPage,
+	          onClickPage: this.setCurrentDocument
+	        }, 'currentPageIndex', currentPageIndex)),
+	        _react2.default.createElement(_Editor2.default, { style: style, onChange: this.onChange, doc: doc, selection: selection })
 	      );
 	    }
 	  }]);
@@ -21199,12 +21223,25 @@
 
 	var Schema = _require.Schema;
 	var Block = _require.Block;
-	var Inline = _require.Inline;
 	var Text = _require.Text;
 	var Attribute = _require.Attribute;
-	var MarkType = _require.MarkType;
 
-	exports.Text = Text;
+	var _require2 = __webpack_require__(188);
+
+	var Paragraph = _require2.Paragraph;
+	var BlockQuote = _require2.BlockQuote;
+	var OrderedList = _require2.OrderedList;
+	var BulletList = _require2.BulletList;
+	var HorizontalRule = _require2.HorizontalRule;
+	var Heading = _require2.Heading;
+	var CodeBlock = _require2.CodeBlock;
+	var ListItem = _require2.ListItem;
+	var Image = _require2.Image;
+	var HardBreak = _require2.HardBreak;
+	var EmMark = _require2.EmMark;
+	var StrongMark = _require2.StrongMark;
+	var LinkMark = _require2.LinkMark;
+	var CodeMark = _require2.CodeMark;
 
 	// !! This module defines a number of basic node and mark types, and a
 	// schema that combines them.
@@ -21220,509 +21257,17 @@
 	    return _possibleConstructorReturn(this, Object.getPrototypeOf(Doc).apply(this, arguments));
 	  }
 
+	  _createClass(Doc, [{
+	    key: "attrs",
+	    get: function get() {
+	      return { id: new Attribute() };
+	    }
+	  }]);
+
 	  return Doc;
 	}(Block);
 
 	exports.Doc = Doc;
-
-	// ;; A blockquote node type.
-
-	var BlockQuote = function (_Block2) {
-	  _inherits(BlockQuote, _Block2);
-
-	  function BlockQuote() {
-	    _classCallCheck(this, BlockQuote);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(BlockQuote).apply(this, arguments));
-	  }
-
-	  _createClass(BlockQuote, [{
-	    key: "toDOM",
-	    value: function toDOM() {
-	      return ["blockquote", 0];
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return { "blockquote": null };
-	    }
-	  }]);
-
-	  return BlockQuote;
-	}(Block);
-
-	exports.BlockQuote = BlockQuote;
-
-	// ;; An ordered list node type. Has a single attribute, `order`,
-	// which determines the number at which the list starts counting, and
-	// defaults to 1.
-
-	var OrderedList = function (_Block3) {
-	  _inherits(OrderedList, _Block3);
-
-	  function OrderedList() {
-	    _classCallCheck(this, OrderedList);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(OrderedList).apply(this, arguments));
-	  }
-
-	  _createClass(OrderedList, [{
-	    key: "toDOM",
-	    value: function toDOM(node) {
-	      return ["ol", { start: node.attrs.order == 1 ? null : node.attrs.order }, 0];
-	    }
-	  }, {
-	    key: "attrs",
-	    get: function get() {
-	      return { order: new Attribute({ default: 1 }) };
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return { "ol": function ol(dom) {
-	          return {
-	            order: dom.hasAttribute("start") ? +dom.getAttribute("start") : 1
-	          };
-	        } };
-	    }
-	  }]);
-
-	  return OrderedList;
-	}(Block);
-
-	exports.OrderedList = OrderedList;
-
-	// ;; A bullet list node type.
-
-	var BulletList = function (_Block4) {
-	  _inherits(BulletList, _Block4);
-
-	  function BulletList() {
-	    _classCallCheck(this, BulletList);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(BulletList).apply(this, arguments));
-	  }
-
-	  _createClass(BulletList, [{
-	    key: "toDOM",
-	    value: function toDOM() {
-	      return ["ul", 0];
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return { "ul": null };
-	    }
-	  }]);
-
-	  return BulletList;
-	}(Block);
-
-	exports.BulletList = BulletList;
-
-	// ;; A list item node type.
-
-	var ListItem = function (_Block5) {
-	  _inherits(ListItem, _Block5);
-
-	  function ListItem() {
-	    _classCallCheck(this, ListItem);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(ListItem).apply(this, arguments));
-	  }
-
-	  _createClass(ListItem, [{
-	    key: "toDOM",
-	    value: function toDOM() {
-	      return ["li", 0];
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return { "li": null };
-	    }
-	  }]);
-
-	  return ListItem;
-	}(Block);
-
-	exports.ListItem = ListItem;
-
-	// ;; A node type for horizontal rules.
-
-	var HorizontalRule = function (_Block6) {
-	  _inherits(HorizontalRule, _Block6);
-
-	  function HorizontalRule() {
-	    _classCallCheck(this, HorizontalRule);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(HorizontalRule).apply(this, arguments));
-	  }
-
-	  _createClass(HorizontalRule, [{
-	    key: "toDOM",
-	    value: function toDOM() {
-	      return ["div", ["hr"]];
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return { "hr": null };
-	    }
-	  }]);
-
-	  return HorizontalRule;
-	}(Block);
-
-	exports.HorizontalRule = HorizontalRule;
-
-	// ;; A heading node type. Has a single attribute `level`, which
-	// indicates the heading level, and defaults to 1.
-
-	var Heading = function (_Block7) {
-	  _inherits(Heading, _Block7);
-
-	  function Heading() {
-	    _classCallCheck(this, Heading);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(Heading).apply(this, arguments));
-	  }
-
-	  _createClass(Heading, [{
-	    key: "toDOM",
-	    value: function toDOM(node) {
-	      return ["h" + node.attrs.level, 0];
-	    }
-	  }, {
-	    key: "attrs",
-	    get: function get() {
-	      return { level: new Attribute({ default: 1 }) };
-	    }
-	    // :: number
-	    // Controls the maximum heading level. Has the value 6 in the
-	    // `Heading` class, but you can override it in a subclass.
-
-	  }, {
-	    key: "maxLevel",
-	    get: function get() {
-	      return 6;
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return {
-	        "h1": { level: 1 },
-	        "h2": { level: 2 },
-	        "h3": { level: 3 },
-	        "h4": { level: 4 },
-	        "h5": { level: 5 },
-	        "h6": { level: 6 }
-	      };
-	    }
-	  }]);
-
-	  return Heading;
-	}(Block);
-
-	exports.Heading = Heading;
-
-	// ;; A code block / listing node type.
-
-	var CodeBlock = function (_Block8) {
-	  _inherits(CodeBlock, _Block8);
-
-	  function CodeBlock() {
-	    _classCallCheck(this, CodeBlock);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(CodeBlock).apply(this, arguments));
-	  }
-
-	  _createClass(CodeBlock, [{
-	    key: "toDOM",
-	    value: function toDOM() {
-	      return ["pre", ["code", 0]];
-	    }
-	  }, {
-	    key: "isCode",
-	    get: function get() {
-	      return true;
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return { "pre": [null, { preserveWhitespace: true }] };
-	    }
-	  }]);
-
-	  return CodeBlock;
-	}(Block);
-
-	exports.CodeBlock = CodeBlock;
-
-	// ;; A paragraph node type.
-
-	var Paragraph = function (_Block9) {
-	  _inherits(Paragraph, _Block9);
-
-	  function Paragraph() {
-	    _classCallCheck(this, Paragraph);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(Paragraph).apply(this, arguments));
-	  }
-
-	  _createClass(Paragraph, [{
-	    key: "toDOM",
-	    value: function toDOM() {
-	      return ["p", 0];
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return { "p": null };
-	    }
-	  }]);
-
-	  return Paragraph;
-	}(Block);
-
-	exports.Paragraph = Paragraph;
-
-	// ;; An inline image node type. Has these attributes:
-	//
-	// - **`src`** (required): The URL of the image.
-	// - **`alt`**: The alt text.
-	// - **`title`**: The title of the image.
-
-	var Image = function (_Inline) {
-	  _inherits(Image, _Inline);
-
-	  function Image() {
-	    _classCallCheck(this, Image);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(Image).apply(this, arguments));
-	  }
-
-	  _createClass(Image, [{
-	    key: "toDOM",
-	    value: function toDOM(node) {
-	      return ["img", node.attrs];
-	    }
-	  }, {
-	    key: "attrs",
-	    get: function get() {
-	      return {
-	        src: new Attribute(),
-	        alt: new Attribute({ default: "" }),
-	        title: new Attribute({ default: "" })
-	      };
-	    }
-	  }, {
-	    key: "draggable",
-	    get: function get() {
-	      return true;
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return { "img[src]": function imgSrc(dom) {
-	          return {
-	            src: dom.getAttribute("src"),
-	            title: dom.getAttribute("title"),
-	            alt: dom.getAttribute("alt")
-	          };
-	        } };
-	    }
-	  }]);
-
-	  return Image;
-	}(Inline);
-
-	exports.Image = Image;
-
-	// ;; A hard break node type.
-
-	var HardBreak = function (_Inline2) {
-	  _inherits(HardBreak, _Inline2);
-
-	  function HardBreak() {
-	    _classCallCheck(this, HardBreak);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(HardBreak).apply(this, arguments));
-	  }
-
-	  _createClass(HardBreak, [{
-	    key: "toDOM",
-	    value: function toDOM() {
-	      return ["br"];
-	    }
-	  }, {
-	    key: "selectable",
-	    get: function get() {
-	      return false;
-	    }
-	  }, {
-	    key: "isBR",
-	    get: function get() {
-	      return true;
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return { "br": null };
-	    }
-	  }]);
-
-	  return HardBreak;
-	}(Inline);
-
-	exports.HardBreak = HardBreak;
-
-	// ;; An emphasis mark type.
-
-	var EmMark = function (_MarkType) {
-	  _inherits(EmMark, _MarkType);
-
-	  function EmMark() {
-	    _classCallCheck(this, EmMark);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(EmMark).apply(this, arguments));
-	  }
-
-	  _createClass(EmMark, [{
-	    key: "toDOM",
-	    value: function toDOM() {
-	      return ["em"];
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return { "i": null, "em": null };
-	    }
-	  }, {
-	    key: "matchDOMStyle",
-	    get: function get() {
-	      return { "font-style": function fontStyle(value) {
-	          return value == "italic" && null;
-	        } };
-	    }
-	  }]);
-
-	  return EmMark;
-	}(MarkType);
-
-	exports.EmMark = EmMark;
-
-	// ;; A strong mark type.
-
-	var StrongMark = function (_MarkType2) {
-	  _inherits(StrongMark, _MarkType2);
-
-	  function StrongMark() {
-	    _classCallCheck(this, StrongMark);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(StrongMark).apply(this, arguments));
-	  }
-
-	  _createClass(StrongMark, [{
-	    key: "toDOM",
-	    value: function toDOM() {
-	      return ["strong"];
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return { "b": null, "strong": null };
-	    }
-	  }, {
-	    key: "matchDOMStyle",
-	    get: function get() {
-	      return { "font-weight": function fontWeight(value) {
-	          return (/^(bold(er)?|[5-9]\d{2,})$/.test(value) && null
-	          );
-	        } };
-	    }
-	  }]);
-
-	  return StrongMark;
-	}(MarkType);
-
-	exports.StrongMark = StrongMark;
-
-	// ;; A link mark type. Has these attributes:
-	//
-	// - **`href`** (required): The link target.
-	// - **`title`**: The link's title.
-
-	var LinkMark = function (_MarkType3) {
-	  _inherits(LinkMark, _MarkType3);
-
-	  function LinkMark() {
-	    _classCallCheck(this, LinkMark);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(LinkMark).apply(this, arguments));
-	  }
-
-	  _createClass(LinkMark, [{
-	    key: "toDOM",
-	    value: function toDOM(node) {
-	      return ["a", node.attrs];
-	    }
-	  }, {
-	    key: "attrs",
-	    get: function get() {
-	      return {
-	        href: new Attribute(),
-	        title: new Attribute({ default: "" })
-	      };
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return { "a[href]": function aHref(dom) {
-	          return {
-	            href: dom.getAttribute("href"), title: dom.getAttribute("title")
-	          };
-	        } };
-	    }
-	  }]);
-
-	  return LinkMark;
-	}(MarkType);
-
-	exports.LinkMark = LinkMark;
-
-	// ;; A code font mark type.
-
-	var CodeMark = function (_MarkType4) {
-	  _inherits(CodeMark, _MarkType4);
-
-	  function CodeMark() {
-	    _classCallCheck(this, CodeMark);
-
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(CodeMark).apply(this, arguments));
-	  }
-
-	  _createClass(CodeMark, [{
-	    key: "toDOM",
-	    value: function toDOM() {
-	      return ["code"];
-	    }
-	  }, {
-	    key: "isCode",
-	    get: function get() {
-	      return true;
-	    }
-	  }, {
-	    key: "matchDOMTag",
-	    get: function get() {
-	      return { "code": null };
-	    }
-	  }]);
-
-	  return CodeMark;
-	}(MarkType);
-
-	exports.CodeMark = CodeMark;
 
 	// :: Schema
 	// A basic document schema.
@@ -25963,6 +25508,579 @@
 
 	"use strict";
 
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var _require = __webpack_require__(173);
+
+	var Schema = _require.Schema;
+	var Block = _require.Block;
+	var Inline = _require.Inline;
+	var Text = _require.Text;
+	var Attribute = _require.Attribute;
+	var MarkType = _require.MarkType;
+
+	exports.Text = Text;
+
+	// !! This module defines a number of basic node and mark types, and a
+	// schema that combines them.
+
+	// ;; A default top-level document node type.
+
+	var Doc = function (_Block) {
+	  _inherits(Doc, _Block);
+
+	  function Doc() {
+	    _classCallCheck(this, Doc);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(Doc).apply(this, arguments));
+	  }
+
+	  return Doc;
+	}(Block);
+
+	exports.Doc = Doc;
+
+	// ;; A blockquote node type.
+
+	var BlockQuote = function (_Block2) {
+	  _inherits(BlockQuote, _Block2);
+
+	  function BlockQuote() {
+	    _classCallCheck(this, BlockQuote);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(BlockQuote).apply(this, arguments));
+	  }
+
+	  _createClass(BlockQuote, [{
+	    key: "toDOM",
+	    value: function toDOM() {
+	      return ["blockquote", 0];
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return { "blockquote": null };
+	    }
+	  }]);
+
+	  return BlockQuote;
+	}(Block);
+
+	exports.BlockQuote = BlockQuote;
+
+	// ;; An ordered list node type. Has a single attribute, `order`,
+	// which determines the number at which the list starts counting, and
+	// defaults to 1.
+
+	var OrderedList = function (_Block3) {
+	  _inherits(OrderedList, _Block3);
+
+	  function OrderedList() {
+	    _classCallCheck(this, OrderedList);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(OrderedList).apply(this, arguments));
+	  }
+
+	  _createClass(OrderedList, [{
+	    key: "toDOM",
+	    value: function toDOM(node) {
+	      return ["ol", { start: node.attrs.order == 1 ? null : node.attrs.order }, 0];
+	    }
+	  }, {
+	    key: "attrs",
+	    get: function get() {
+	      return { order: new Attribute({ default: 1 }) };
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return { "ol": function ol(dom) {
+	          return {
+	            order: dom.hasAttribute("start") ? +dom.getAttribute("start") : 1
+	          };
+	        } };
+	    }
+	  }]);
+
+	  return OrderedList;
+	}(Block);
+
+	exports.OrderedList = OrderedList;
+
+	// ;; A bullet list node type.
+
+	var BulletList = function (_Block4) {
+	  _inherits(BulletList, _Block4);
+
+	  function BulletList() {
+	    _classCallCheck(this, BulletList);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(BulletList).apply(this, arguments));
+	  }
+
+	  _createClass(BulletList, [{
+	    key: "toDOM",
+	    value: function toDOM() {
+	      return ["ul", 0];
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return { "ul": null };
+	    }
+	  }]);
+
+	  return BulletList;
+	}(Block);
+
+	exports.BulletList = BulletList;
+
+	// ;; A list item node type.
+
+	var ListItem = function (_Block5) {
+	  _inherits(ListItem, _Block5);
+
+	  function ListItem() {
+	    _classCallCheck(this, ListItem);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(ListItem).apply(this, arguments));
+	  }
+
+	  _createClass(ListItem, [{
+	    key: "toDOM",
+	    value: function toDOM() {
+	      return ["li", 0];
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return { "li": null };
+	    }
+	  }]);
+
+	  return ListItem;
+	}(Block);
+
+	exports.ListItem = ListItem;
+
+	// ;; A node type for horizontal rules.
+
+	var HorizontalRule = function (_Block6) {
+	  _inherits(HorizontalRule, _Block6);
+
+	  function HorizontalRule() {
+	    _classCallCheck(this, HorizontalRule);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(HorizontalRule).apply(this, arguments));
+	  }
+
+	  _createClass(HorizontalRule, [{
+	    key: "toDOM",
+	    value: function toDOM() {
+	      return ["div", ["hr"]];
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return { "hr": null };
+	    }
+	  }]);
+
+	  return HorizontalRule;
+	}(Block);
+
+	exports.HorizontalRule = HorizontalRule;
+
+	// ;; A heading node type. Has a single attribute `level`, which
+	// indicates the heading level, and defaults to 1.
+
+	var Heading = function (_Block7) {
+	  _inherits(Heading, _Block7);
+
+	  function Heading() {
+	    _classCallCheck(this, Heading);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(Heading).apply(this, arguments));
+	  }
+
+	  _createClass(Heading, [{
+	    key: "toDOM",
+	    value: function toDOM(node) {
+	      return ["h" + node.attrs.level, 0];
+	    }
+	  }, {
+	    key: "attrs",
+	    get: function get() {
+	      return { level: new Attribute({ default: 1 }) };
+	    }
+	    // :: number
+	    // Controls the maximum heading level. Has the value 6 in the
+	    // `Heading` class, but you can override it in a subclass.
+
+	  }, {
+	    key: "maxLevel",
+	    get: function get() {
+	      return 6;
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return {
+	        "h1": { level: 1 },
+	        "h2": { level: 2 },
+	        "h3": { level: 3 },
+	        "h4": { level: 4 },
+	        "h5": { level: 5 },
+	        "h6": { level: 6 }
+	      };
+	    }
+	  }]);
+
+	  return Heading;
+	}(Block);
+
+	exports.Heading = Heading;
+
+	// ;; A code block / listing node type.
+
+	var CodeBlock = function (_Block8) {
+	  _inherits(CodeBlock, _Block8);
+
+	  function CodeBlock() {
+	    _classCallCheck(this, CodeBlock);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(CodeBlock).apply(this, arguments));
+	  }
+
+	  _createClass(CodeBlock, [{
+	    key: "toDOM",
+	    value: function toDOM() {
+	      return ["pre", ["code", 0]];
+	    }
+	  }, {
+	    key: "isCode",
+	    get: function get() {
+	      return true;
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return { "pre": [null, { preserveWhitespace: true }] };
+	    }
+	  }]);
+
+	  return CodeBlock;
+	}(Block);
+
+	exports.CodeBlock = CodeBlock;
+
+	// ;; A paragraph node type.
+
+	var Paragraph = function (_Block9) {
+	  _inherits(Paragraph, _Block9);
+
+	  function Paragraph() {
+	    _classCallCheck(this, Paragraph);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(Paragraph).apply(this, arguments));
+	  }
+
+	  _createClass(Paragraph, [{
+	    key: "toDOM",
+	    value: function toDOM() {
+	      return ["p", 0];
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return { "p": null };
+	    }
+	  }]);
+
+	  return Paragraph;
+	}(Block);
+
+	exports.Paragraph = Paragraph;
+
+	// ;; An inline image node type. Has these attributes:
+	//
+	// - **`src`** (required): The URL of the image.
+	// - **`alt`**: The alt text.
+	// - **`title`**: The title of the image.
+
+	var Image = function (_Inline) {
+	  _inherits(Image, _Inline);
+
+	  function Image() {
+	    _classCallCheck(this, Image);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(Image).apply(this, arguments));
+	  }
+
+	  _createClass(Image, [{
+	    key: "toDOM",
+	    value: function toDOM(node) {
+	      return ["img", node.attrs];
+	    }
+	  }, {
+	    key: "attrs",
+	    get: function get() {
+	      return {
+	        src: new Attribute(),
+	        alt: new Attribute({ default: "" }),
+	        title: new Attribute({ default: "" })
+	      };
+	    }
+	  }, {
+	    key: "draggable",
+	    get: function get() {
+	      return true;
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return { "img[src]": function imgSrc(dom) {
+	          return {
+	            src: dom.getAttribute("src"),
+	            title: dom.getAttribute("title"),
+	            alt: dom.getAttribute("alt")
+	          };
+	        } };
+	    }
+	  }]);
+
+	  return Image;
+	}(Inline);
+
+	exports.Image = Image;
+
+	// ;; A hard break node type.
+
+	var HardBreak = function (_Inline2) {
+	  _inherits(HardBreak, _Inline2);
+
+	  function HardBreak() {
+	    _classCallCheck(this, HardBreak);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(HardBreak).apply(this, arguments));
+	  }
+
+	  _createClass(HardBreak, [{
+	    key: "toDOM",
+	    value: function toDOM() {
+	      return ["br"];
+	    }
+	  }, {
+	    key: "selectable",
+	    get: function get() {
+	      return false;
+	    }
+	  }, {
+	    key: "isBR",
+	    get: function get() {
+	      return true;
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return { "br": null };
+	    }
+	  }]);
+
+	  return HardBreak;
+	}(Inline);
+
+	exports.HardBreak = HardBreak;
+
+	// ;; An emphasis mark type.
+
+	var EmMark = function (_MarkType) {
+	  _inherits(EmMark, _MarkType);
+
+	  function EmMark() {
+	    _classCallCheck(this, EmMark);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(EmMark).apply(this, arguments));
+	  }
+
+	  _createClass(EmMark, [{
+	    key: "toDOM",
+	    value: function toDOM() {
+	      return ["em"];
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return { "i": null, "em": null };
+	    }
+	  }, {
+	    key: "matchDOMStyle",
+	    get: function get() {
+	      return { "font-style": function fontStyle(value) {
+	          return value == "italic" && null;
+	        } };
+	    }
+	  }]);
+
+	  return EmMark;
+	}(MarkType);
+
+	exports.EmMark = EmMark;
+
+	// ;; A strong mark type.
+
+	var StrongMark = function (_MarkType2) {
+	  _inherits(StrongMark, _MarkType2);
+
+	  function StrongMark() {
+	    _classCallCheck(this, StrongMark);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(StrongMark).apply(this, arguments));
+	  }
+
+	  _createClass(StrongMark, [{
+	    key: "toDOM",
+	    value: function toDOM() {
+	      return ["strong"];
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return { "b": null, "strong": null };
+	    }
+	  }, {
+	    key: "matchDOMStyle",
+	    get: function get() {
+	      return { "font-weight": function fontWeight(value) {
+	          return (/^(bold(er)?|[5-9]\d{2,})$/.test(value) && null
+	          );
+	        } };
+	    }
+	  }]);
+
+	  return StrongMark;
+	}(MarkType);
+
+	exports.StrongMark = StrongMark;
+
+	// ;; A link mark type. Has these attributes:
+	//
+	// - **`href`** (required): The link target.
+	// - **`title`**: The link's title.
+
+	var LinkMark = function (_MarkType3) {
+	  _inherits(LinkMark, _MarkType3);
+
+	  function LinkMark() {
+	    _classCallCheck(this, LinkMark);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(LinkMark).apply(this, arguments));
+	  }
+
+	  _createClass(LinkMark, [{
+	    key: "toDOM",
+	    value: function toDOM(node) {
+	      return ["a", node.attrs];
+	    }
+	  }, {
+	    key: "attrs",
+	    get: function get() {
+	      return {
+	        href: new Attribute(),
+	        title: new Attribute({ default: "" })
+	      };
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return { "a[href]": function aHref(dom) {
+	          return {
+	            href: dom.getAttribute("href"), title: dom.getAttribute("title")
+	          };
+	        } };
+	    }
+	  }]);
+
+	  return LinkMark;
+	}(MarkType);
+
+	exports.LinkMark = LinkMark;
+
+	// ;; A code font mark type.
+
+	var CodeMark = function (_MarkType4) {
+	  _inherits(CodeMark, _MarkType4);
+
+	  function CodeMark() {
+	    _classCallCheck(this, CodeMark);
+
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(CodeMark).apply(this, arguments));
+	  }
+
+	  _createClass(CodeMark, [{
+	    key: "toDOM",
+	    value: function toDOM() {
+	      return ["code"];
+	    }
+	  }, {
+	    key: "isCode",
+	    get: function get() {
+	      return true;
+	    }
+	  }, {
+	    key: "matchDOMTag",
+	    get: function get() {
+	      return { "code": null };
+	    }
+	  }]);
+
+	  return CodeMark;
+	}(MarkType);
+
+	exports.CodeMark = CodeMark;
+
+	// :: Schema
+	// A basic document schema.
+	var schema = new Schema({
+	  nodes: {
+	    doc: { type: Doc, content: "block+" },
+
+	    paragraph: { type: Paragraph, content: "inline<_>*", group: "block" },
+	    blockquote: { type: BlockQuote, content: "block+", group: "block" },
+	    ordered_list: { type: OrderedList, content: "list_item+", group: "block" },
+	    bullet_list: { type: BulletList, content: "list_item+", group: "block" },
+	    horizontal_rule: { type: HorizontalRule, group: "block" },
+	    heading: { type: Heading, content: "inline<_>*", group: "block" },
+	    code_block: { type: CodeBlock, content: "text*", group: "block" },
+
+	    list_item: { type: ListItem, content: "paragraph block*" },
+
+	    text: { type: Text, group: "inline" },
+	    image: { type: Image, group: "inline" },
+	    hard_break: { type: HardBreak, group: "inline" }
+	  },
+
+	  marks: {
+	    em: EmMark,
+	    strong: StrongMark,
+	    link: LinkMark,
+	    code: CodeMark
+	  }
+	});
+	exports.schema = schema;
+
+/***/ },
+/* 189 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
@@ -25972,10 +26090,6 @@
 	var _react = __webpack_require__(1);
 
 	var _react2 = _interopRequireDefault(_react);
-
-	var _to_dom = __webpack_require__(176);
-
-	var _schemaBasic = __webpack_require__(172);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -26016,9 +26130,10 @@
 	      if (doc.length > 300) {
 	        doc = doc.substring(0, 100);
 	      }
+	      var className = 'page-list-item' + (this.props.selected ? ' selected' : '');
 	      return _react2.default.createElement(
 	        "div",
-	        { className: "page-list-item" },
+	        { onClick: this.props.onClick, className: className },
 	        doc
 	      );
 	    }
@@ -26039,12 +26154,15 @@
 	  _createClass(PageBrowser, [{
 	    key: "render",
 	    value: function render() {
+	      var _this3 = this;
+
 	      var _props = this.props;
 	      var pages = _props.pages;
 	      var currentPageIndex = _props.currentPageIndex;
 
 	      var pageListItems = pages.map(function (page, index) {
-	        return _react2.default.createElement(PageListItem, { key: index, doc: page });
+	        var selected = currentPageIndex === index;
+	        return _react2.default.createElement(PageListItem, { selected: selected, onClick: _this3.props.onClickPage.bind(_this3, index), key: index, doc: page });
 	      });
 	      return _react2.default.createElement(
 	        "div",
@@ -26052,7 +26170,12 @@
 	        _react2.default.createElement(
 	          "h2",
 	          null,
-	          "Pages"
+	          "Pages",
+	          _react2.default.createElement(
+	            "button",
+	            { onClick: this.props.onClickCreateNew, style: { marginLeft: '10px' } },
+	            "New Page"
+	          )
 	        ),
 	        pageListItems
 	      );
@@ -26065,7 +26188,7 @@
 	exports.default = PageBrowser;
 
 /***/ },
-/* 189 */
+/* 190 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -26082,15 +26205,15 @@
 
 	var _reactDom = __webpack_require__(33);
 
-	var _prosemirror = __webpack_require__(190);
+	var _prosemirror = __webpack_require__(191);
 
 	var _prosemirror2 = _interopRequireDefault(_prosemirror);
 
-	var _schemaBasic = __webpack_require__(172);
+	var _editorSchema = __webpack_require__(172);
 
-	var _exampleSetup = __webpack_require__(222);
+	var _exampleSetup = __webpack_require__(223);
 
-	var _menu = __webpack_require__(227);
+	var _menu = __webpack_require__(228);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -26126,25 +26249,26 @@
 	    }
 	  }, {
 	    key: '_mountEditor',
-	    value: function _mountEditor() {
+	    value: function _mountEditor(overrides) {
 	      var _props = this.props;
 	      var doc = _props.doc;
 	      var options = _props.options;
 
+	      if (overrides && overrides.doc) {
+	        doc = overrides.doc;
+	      }
 	      this.editorNode = this.refs.editorNode;
+
 	      this.editor = window.pm = new _prosemirror2.default.ProseMirror({
 	        place: this.editorNode,
-	        doc: _schemaBasic.schema.nodeFromJSON(doc),
-	        schema: _schemaBasic.schema,
-	        plugins: [_exampleSetup.exampleSetup.config({ menuBar: false, tooltipMenu: false })]
+	        doc: _editorSchema.schema.nodeFromJSON(doc),
+	        schema: _editorSchema.schema,
+	        plugins: [_exampleSetup.exampleSetup.config({ menuBar: false })]
 	      });
 
-	      this.menu = (0, _exampleSetup.buildMenuItems)(_schemaBasic.schema);
+	      this.menu = (0, _exampleSetup.buildMenuItems)(_editorSchema.schema);
 
 	      _menu.menuBar.config({ float: true, content: this.menu.fullMenu }).attach(this.editor);
-	      _menu.tooltipMenu.config({ selectedBlockMenu: true,
-	        inlineContent: this.menu.inlineMenu,
-	        blockContent: this.menu.blockMenu }).attach(this.editor);
 
 	      this.editor.on.change.add(this.onChange);
 	      this.editor.on.selectionChange.add(this.onSelectionChange);
@@ -26154,6 +26278,10 @@
 	    value: function componentDidMount() {
 	      this._mountEditor();
 	    }
+
+	    // If a different document is passed,
+	    // initialize a new ProseMirror instance.
+
 	  }, {
 	    key: 'componentWillReceiveProps',
 	    value: function componentWillReceiveProps(props) {
@@ -26161,16 +26289,12 @@
 	      var selection = props.selection;
 	      var options = props.options;
 
-	      if (doc !== this.props.doc || selection !== this.props.selection) {
-	        console.log('update doc -------------');
-	        // todo: more conservative update
-	        this._updateEditor(doc, selection);
-	      }
-	      if (options !== this.props.options) {
-	        console.log('update options =============');
+
+	      if (this.props.doc.attrs.id !== props.doc.attrs.id) {
 	        this._removeProseMirror();
-	        this._mountEditor();
-	      }
+	        this._mountEditor(props);
+	        return;
+	      } else {}
 	    }
 	  }, {
 	    key: 'componentWillUnmount',
@@ -26237,7 +26361,7 @@
 	};
 
 /***/ },
-/* 190 */
+/* 191 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -26247,28 +26371,28 @@
 	// the browser. `ProseMirror` is the class you'll want to instantiate
 	// and interact with when using the editor.
 
-	exports.ProseMirror = __webpack_require__(191).ProseMirror;
-	var _require = __webpack_require__(211);
+	exports.ProseMirror = __webpack_require__(192).ProseMirror;
+	var _require = __webpack_require__(212);
 
 	exports.Selection = _require.Selection;
 	exports.TextSelection = _require.TextSelection;
 	exports.NodeSelection = _require.NodeSelection;
 
-	var _require2 = __webpack_require__(218);
+	var _require2 = __webpack_require__(219);
 
 	exports.MarkedRange = _require2.MarkedRange;
 
-	exports.baseKeymap = __webpack_require__(206).baseKeymap;
-	var _require3 = __webpack_require__(221);
+	exports.baseKeymap = __webpack_require__(207).baseKeymap;
+	var _require3 = __webpack_require__(222);
 
 	exports.Plugin = _require3.Plugin;
 
-	exports.commands = __webpack_require__(209).commands;
+	exports.commands = __webpack_require__(210).commands;
 
-	exports.Keymap = __webpack_require__(207);
+	exports.Keymap = __webpack_require__(208);
 
 /***/ },
-/* 191 */
+/* 192 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -26277,27 +26401,27 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	__webpack_require__(192);
+	__webpack_require__(193);
 
-	var _require = __webpack_require__(194);
+	var _require = __webpack_require__(195);
 
 	var Map = _require.Map;
 
-	var _require2 = __webpack_require__(195);
+	var _require2 = __webpack_require__(196);
 
 	var Subscription = _require2.Subscription;
 	var PipelineSubscription = _require2.PipelineSubscription;
 	var StoppableSubscription = _require2.StoppableSubscription;
 	var DOMSubscription = _require2.DOMSubscription;
 
-	var _require3 = __webpack_require__(193);
+	var _require3 = __webpack_require__(194);
 
 	var requestAnimationFrame = _require3.requestAnimationFrame;
 	var cancelAnimationFrame = _require3.cancelAnimationFrame;
 	var elt = _require3.elt;
 	var ensureCSSAdded = _require3.ensureCSSAdded;
 
-	var _require4 = __webpack_require__(196);
+	var _require4 = __webpack_require__(197);
 
 	var mapThrough = _require4.mapThrough;
 
@@ -26305,11 +26429,11 @@
 
 	var Mark = _require5.Mark;
 
-	var _require6 = __webpack_require__(205);
+	var _require6 = __webpack_require__(206);
 
 	var parseOptions = _require6.parseOptions;
 
-	var _require7 = __webpack_require__(211);
+	var _require7 = __webpack_require__(212);
 
 	var SelectionState = _require7.SelectionState;
 	var TextSelection = _require7.TextSelection;
@@ -26317,37 +26441,37 @@
 	var findSelectionAtStart = _require7.findSelectionAtStart;
 	var _hasFocus = _require7.hasFocus;
 
-	var _require8 = __webpack_require__(212);
+	var _require8 = __webpack_require__(213);
 
 	var scrollIntoView = _require8.scrollIntoView;
 	var posAtCoords = _require8.posAtCoords;
 	var _coordsAtPos = _require8.coordsAtPos;
 
-	var _require9 = __webpack_require__(213);
+	var _require9 = __webpack_require__(214);
 
 	var draw = _require9.draw;
 	var redraw = _require9.redraw;
 	var DIRTY_REDRAW = _require9.DIRTY_REDRAW;
 	var DIRTY_RESCAN = _require9.DIRTY_RESCAN;
 
-	var _require10 = __webpack_require__(214);
+	var _require10 = __webpack_require__(215);
 
 	var Input = _require10.Input;
 
-	var _require11 = __webpack_require__(217);
+	var _require11 = __webpack_require__(218);
 
 	var History = _require11.History;
 
-	var _require12 = __webpack_require__(218);
+	var _require12 = __webpack_require__(219);
 
 	var RangeStore = _require12.RangeStore;
 	var MarkedRange = _require12.MarkedRange;
 
-	var _require13 = __webpack_require__(219);
+	var _require13 = __webpack_require__(220);
 
 	var EditorTransform = _require13.EditorTransform;
 
-	var _require14 = __webpack_require__(220);
+	var _require14 = __webpack_require__(221);
 
 	var EditorScheduler = _require14.EditorScheduler;
 	var UpdateScheduler = _require14.UpdateScheduler;
@@ -27079,12 +27203,12 @@
 	};
 
 /***/ },
-/* 192 */
+/* 193 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var _require = __webpack_require__(193);
+	var _require = __webpack_require__(194);
 
 	var insertCSS = _require.insertCSS;
 
@@ -27092,7 +27216,7 @@
 	insertCSS("\n\n.ProseMirror {\n  position: relative;\n}\n\n.ProseMirror-content {\n  white-space: pre-wrap;\n}\n\n.ProseMirror-drop-target {\n  position: absolute;\n  width: 1px;\n  background: #666;\n  pointer-events: none;\n}\n\n.ProseMirror-content ul, .ProseMirror-content ol {\n  padding-left: 30px;\n  cursor: default;\n}\n\n.ProseMirror-content blockquote {\n  padding-left: 1em;\n  border-left: 3px solid #eee;\n  margin-left: 0; margin-right: 0;\n}\n\n.ProseMirror-content pre {\n  white-space: pre-wrap;\n}\n\n.ProseMirror-content li {\n  position: relative;\n  pointer-events: none; /* Don't do weird stuff with marker clicks */\n}\n.ProseMirror-content li > * {\n  pointer-events: auto;\n}\n\n.ProseMirror-nodeselection *::selection { background: transparent; }\n.ProseMirror-nodeselection *::-moz-selection { background: transparent; }\n\n.ProseMirror-selectednode {\n  outline: 2px solid #8cf;\n}\n\n/* Make sure li selections wrap around markers */\n\nli.ProseMirror-selectednode {\n  outline: none;\n}\n\nli.ProseMirror-selectednode:after {\n  content: \"\";\n  position: absolute;\n  left: -32px;\n  right: -2px; top: -2px; bottom: -2px;\n  border: 2px solid #8cf;\n  pointer-events: none;\n}\n\n");
 
 /***/ },
-/* 193 */
+/* 194 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -27167,7 +27291,7 @@
 	exports.ensureCSSAdded = ensureCSSAdded;
 
 /***/ },
-/* 194 */
+/* 195 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -27224,7 +27348,7 @@
 	exports.Map = Map;
 
 /***/ },
-/* 195 */
+/* 196 */
 /***/ function(module, exports) {
 
 	function Handler(f, once, priority) {
@@ -27325,23 +27449,23 @@
 
 
 /***/ },
-/* 196 */
+/* 197 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	;
-	var _require = __webpack_require__(197);
+	var _require = __webpack_require__(198);
 
 	exports.Transform = _require.Transform;
 	exports.TransformError = _require.TransformError;
 
-	var _require2 = __webpack_require__(199);
+	var _require2 = __webpack_require__(200);
 
 	exports.Step = _require2.Step;
 	exports.StepResult = _require2.StepResult;
 
-	var _require3 = __webpack_require__(200);
+	var _require3 = __webpack_require__(201);
 
 	exports.joinPoint = _require3.joinPoint;
 	exports.joinable = _require3.joinable;
@@ -27350,7 +27474,7 @@
 	exports.liftTarget = _require3.liftTarget;
 	exports.findWrapping = _require3.findWrapping;
 
-	var _require4 = __webpack_require__(198);
+	var _require4 = __webpack_require__(199);
 
 	exports.PosMap = _require4.PosMap;
 	exports.MapResult = _require4.MapResult;
@@ -27358,18 +27482,18 @@
 	exports.mapThrough = _require4.mapThrough;
 	exports.mapThroughResult = _require4.mapThroughResult;
 
-	var _require5 = __webpack_require__(202);
+	var _require5 = __webpack_require__(203);
 
 	exports.AddMarkStep = _require5.AddMarkStep;
 	exports.RemoveMarkStep = _require5.RemoveMarkStep;
 
-	var _require6 = __webpack_require__(201);
+	var _require6 = __webpack_require__(202);
 
 	exports.ReplaceStep = _require6.ReplaceStep;
 	exports.ReplaceAroundStep = _require6.ReplaceAroundStep;
 
-	__webpack_require__(203);
 	__webpack_require__(204);
+	__webpack_require__(205);
 
 	// !! This module defines a way to transform documents. Transforming
 	// happens in `Step`s, which are atomic, well-defined modifications to
@@ -27388,7 +27512,7 @@
 	// guide](guide/transform.md).
 
 /***/ },
-/* 197 */
+/* 198 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -27405,7 +27529,7 @@
 
 	var ProseMirrorError = _require.ProseMirrorError;
 
-	var _require2 = __webpack_require__(198);
+	var _require2 = __webpack_require__(199);
 
 	var mapThrough = _require2.mapThrough;
 	var mapThroughResult = _require2.mapThroughResult;
@@ -27519,7 +27643,7 @@
 	exports.Transform = Transform;
 
 /***/ },
-/* 198 */
+/* 199 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -27857,7 +27981,7 @@
 	exports.mapThroughResult = mapThroughResult;
 
 /***/ },
-/* 199 */
+/* 200 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -27870,7 +27994,7 @@
 
 	var ReplaceError = _require.ReplaceError;
 
-	var _require2 = __webpack_require__(198);
+	var _require2 = __webpack_require__(199);
 
 	var PosMap = _require2.PosMap;
 
@@ -28045,7 +28169,7 @@
 	exports.StepResult = StepResult;
 
 /***/ },
-/* 200 */
+/* 201 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -28055,11 +28179,11 @@
 	var Slice = _require.Slice;
 	var Fragment = _require.Fragment;
 
-	var _require2 = __webpack_require__(197);
+	var _require2 = __webpack_require__(198);
 
 	var Transform = _require2.Transform;
 
-	var _require3 = __webpack_require__(201);
+	var _require3 = __webpack_require__(202);
 
 	var ReplaceStep = _require3.ReplaceStep;
 	var ReplaceAroundStep = _require3.ReplaceAroundStep;
@@ -28341,7 +28465,7 @@
 	exports.insertPoint = insertPoint;
 
 /***/ },
-/* 201 */
+/* 202 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -28358,12 +28482,12 @@
 
 	var Slice = _require.Slice;
 
-	var _require2 = __webpack_require__(199);
+	var _require2 = __webpack_require__(200);
 
 	var Step = _require2.Step;
 	var StepResult = _require2.StepResult;
 
-	var _require3 = __webpack_require__(198);
+	var _require3 = __webpack_require__(199);
 
 	var PosMap = _require3.PosMap;
 
@@ -28525,7 +28649,7 @@
 	}
 
 /***/ },
-/* 202 */
+/* 203 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -28543,7 +28667,7 @@
 	var Fragment = _require.Fragment;
 	var Slice = _require.Slice;
 
-	var _require2 = __webpack_require__(199);
+	var _require2 = __webpack_require__(200);
 
 	var Step = _require2.Step;
 	var StepResult = _require2.StepResult;
@@ -28674,7 +28798,7 @@
 	Step.jsonID("removeMark", RemoveMarkStep);
 
 /***/ },
-/* 203 */
+/* 204 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -28684,16 +28808,16 @@
 	var MarkType = _require.MarkType;
 	var Slice = _require.Slice;
 
-	var _require2 = __webpack_require__(197);
+	var _require2 = __webpack_require__(198);
 
 	var Transform = _require2.Transform;
 
-	var _require3 = __webpack_require__(202);
+	var _require3 = __webpack_require__(203);
 
 	var AddMarkStep = _require3.AddMarkStep;
 	var RemoveMarkStep = _require3.RemoveMarkStep;
 
-	var _require4 = __webpack_require__(201);
+	var _require4 = __webpack_require__(202);
 
 	var ReplaceStep = _require4.ReplaceStep;
 
@@ -28823,7 +28947,7 @@
 	};
 
 /***/ },
-/* 204 */
+/* 205 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -28833,12 +28957,12 @@
 	var Fragment = _require.Fragment;
 	var Slice = _require.Slice;
 
-	var _require2 = __webpack_require__(201);
+	var _require2 = __webpack_require__(202);
 
 	var ReplaceStep = _require2.ReplaceStep;
 	var ReplaceAroundStep = _require2.ReplaceAroundStep;
 
-	var _require3 = __webpack_require__(197);
+	var _require3 = __webpack_require__(198);
 
 	var Transform = _require3.Transform;
 
@@ -29157,12 +29281,12 @@
 	}
 
 /***/ },
-/* 205 */
+/* 206 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var _require = __webpack_require__(206);
+	var _require = __webpack_require__(207);
 
 	var baseKeymap = _require.baseKeymap;
 
@@ -29237,15 +29361,15 @@
 	exports.parseOptions = parseOptions;
 
 /***/ },
-/* 206 */
+/* 207 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var Keymap = __webpack_require__(207);
-	var browser = __webpack_require__(208);
+	var Keymap = __webpack_require__(208);
+	var browser = __webpack_require__(209);
 
-	var c = __webpack_require__(209).commands;
+	var c = __webpack_require__(210).commands;
 
 	// :: Keymap
 
@@ -29293,7 +29417,7 @@
 	});
 
 /***/ },
-/* 207 */
+/* 208 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function(mod) {
@@ -29481,7 +29605,7 @@
 
 
 /***/ },
-/* 208 */
+/* 209 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -29498,12 +29622,12 @@
 	};
 
 /***/ },
-/* 209 */
+/* 210 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var _require = __webpack_require__(196);
+	var _require = __webpack_require__(197);
 
 	var joinPoint = _require.joinPoint;
 	var joinable = _require.joinable;
@@ -29518,14 +29642,14 @@
 	var Fragment = _require2.Fragment;
 	var NodeRange = _require2.NodeRange;
 
-	var browser = __webpack_require__(208);
+	var browser = __webpack_require__(209);
 
-	var _require3 = __webpack_require__(210);
+	var _require3 = __webpack_require__(211);
 
 	var charCategory = _require3.charCategory;
 	var isExtendingChar = _require3.isExtendingChar;
 
-	var _require4 = __webpack_require__(211);
+	var _require4 = __webpack_require__(212);
 
 	var findSelectionFrom = _require4.findSelectionFrom;
 	var TextSelection = _require4.TextSelection;
@@ -30248,7 +30372,7 @@
 	};
 
 /***/ },
-/* 210 */
+/* 211 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -30282,7 +30406,7 @@
 	exports.isExtendingChar = isExtendingChar;
 
 /***/ },
-/* 211 */
+/* 212 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -30295,13 +30419,13 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var _require = __webpack_require__(193);
+	var _require = __webpack_require__(194);
 
 	var contains = _require.contains;
 
-	var browser = __webpack_require__(208);
+	var browser = __webpack_require__(209);
 
-	var _require2 = __webpack_require__(212);
+	var _require2 = __webpack_require__(213);
 
 	var posFromDOM = _require2.posFromDOM;
 	var DOMAfterPos = _require2.DOMAfterPos;
@@ -30841,12 +30965,12 @@
 	exports.verticalMotionLeavesTextblock = verticalMotionLeavesTextblock;
 
 /***/ },
-/* 212 */
+/* 213 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var _require = __webpack_require__(193);
+	var _require = __webpack_require__(194);
 
 	var contains = _require.contains;
 
@@ -31189,18 +31313,18 @@
 	exports.coordsAtPos = coordsAtPos;
 
 /***/ },
-/* 213 */
+/* 214 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var _require = __webpack_require__(193);
+	var _require = __webpack_require__(194);
 
 	var elt = _require.elt;
 
-	var browser = __webpack_require__(208);
+	var browser = __webpack_require__(209);
 
-	var _require2 = __webpack_require__(212);
+	var _require2 = __webpack_require__(213);
 
 	var childContainer = _require2.childContainer;
 
@@ -31382,7 +31506,7 @@
 	}
 
 /***/ },
-/* 214 */
+/* 215 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -31391,8 +31515,8 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var Keymap = __webpack_require__(207);
-	var browser = __webpack_require__(208);
+	var Keymap = __webpack_require__(208);
+	var browser = __webpack_require__(209);
 
 	var _require = __webpack_require__(173);
 
@@ -31400,21 +31524,21 @@
 	var Fragment = _require.Fragment;
 	var parseDOMInContext = _require.parseDOMInContext;
 
-	var _require2 = __webpack_require__(215);
+	var _require2 = __webpack_require__(216);
 
 	var captureKeys = _require2.captureKeys;
 
-	var _require3 = __webpack_require__(193);
+	var _require3 = __webpack_require__(194);
 
 	var elt = _require3.elt;
 	var contains = _require3.contains;
 
-	var _require4 = __webpack_require__(216);
+	var _require4 = __webpack_require__(217);
 
 	var readInputChange = _require4.readInputChange;
 	var readCompositionChange = _require4.readCompositionChange;
 
-	var _require5 = __webpack_require__(211);
+	var _require5 = __webpack_require__(212);
 
 	var findSelectionNear = _require5.findSelectionNear;
 	var hasFocus = _require5.hasFocus;
@@ -32060,21 +32184,21 @@
 	};
 
 /***/ },
-/* 215 */
+/* 216 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var Keymap = __webpack_require__(207);
+	var Keymap = __webpack_require__(208);
 
-	var _require = __webpack_require__(211);
+	var _require = __webpack_require__(212);
 
 	var findSelectionFrom = _require.findSelectionFrom;
 	var verticalMotionLeavesTextblock = _require.verticalMotionLeavesTextblock;
 	var NodeSelection = _require.NodeSelection;
 	var TextSelection = _require.TextSelection;
 
-	var browser = __webpack_require__(208);
+	var browser = __webpack_require__(209);
 
 	function nothing() {}
 
@@ -32228,7 +32352,7 @@
 	exports.captureKeys = captureKeys;
 
 /***/ },
-/* 216 */
+/* 217 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -32237,17 +32361,17 @@
 
 	var Mark = _require.Mark;
 
-	var _require2 = __webpack_require__(196);
+	var _require2 = __webpack_require__(197);
 
 	var mapThroughResult = _require2.mapThroughResult;
 
-	var _require3 = __webpack_require__(211);
+	var _require3 = __webpack_require__(212);
 
 	var findSelectionFrom = _require3.findSelectionFrom;
 	var findSelectionNear = _require3.findSelectionNear;
 	var TextSelection = _require3.TextSelection;
 
-	var _require4 = __webpack_require__(212);
+	var _require4 = __webpack_require__(213);
 
 	var DOMFromPos = _require4.DOMFromPos;
 	var DOMFromPosFromEnd = _require4.DOMFromPosFromEnd;
@@ -32472,7 +32596,7 @@
 	}
 
 /***/ },
-/* 217 */
+/* 218 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -32485,7 +32609,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var _require = __webpack_require__(196);
+	var _require = __webpack_require__(197);
 
 	var Transform = _require.Transform;
 	var Remapping = _require.Remapping;
@@ -33025,7 +33149,7 @@
 	exports.History = History;
 
 /***/ },
-/* 218 */
+/* 219 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -33225,7 +33349,7 @@
 	}();
 
 /***/ },
-/* 219 */
+/* 220 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -33242,12 +33366,12 @@
 
 	var Fragment = _require.Fragment;
 
-	var _require2 = __webpack_require__(196);
+	var _require2 = __webpack_require__(197);
 
 	var Transform = _require2.Transform;
 	var insertPoint = _require2.insertPoint;
 
-	var _require3 = __webpack_require__(211);
+	var _require3 = __webpack_require__(212);
 
 	var findSelectionNear = _require3.findSelectionNear;
 
@@ -33396,7 +33520,7 @@
 	exports.EditorTransform = EditorTransform;
 
 /***/ },
-/* 220 */
+/* 221 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -33523,7 +33647,7 @@
 	exports.UpdateScheduler = UpdateScheduler;
 
 /***/ },
-/* 221 */
+/* 222 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -33638,7 +33762,7 @@
 	exports.Plugin = Plugin;
 
 /***/ },
-/* 222 */
+/* 223 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -33647,7 +33771,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var _require = __webpack_require__(223);
+	var _require = __webpack_require__(224);
 
 	var blockQuoteRule = _require.blockQuoteRule;
 	var orderedListRule = _require.orderedListRule;
@@ -33657,7 +33781,7 @@
 	var inputRules = _require.inputRules;
 	var allInputRules = _require.allInputRules;
 
-	var _require2 = __webpack_require__(172);
+	var _require2 = __webpack_require__(188);
 
 	var BlockQuote = _require2.BlockQuote;
 	var OrderedList = _require2.OrderedList;
@@ -33665,26 +33789,26 @@
 	var CodeBlock = _require2.CodeBlock;
 	var Heading = _require2.Heading;
 
-	var _require3 = __webpack_require__(190);
+	var _require3 = __webpack_require__(191);
 
 	var Plugin = _require3.Plugin;
 
-	var _require4 = __webpack_require__(227);
+	var _require4 = __webpack_require__(228);
 
 	var menuBar = _require4.menuBar;
 	var tooltipMenu = _require4.tooltipMenu;
 
-	var _require5 = __webpack_require__(235);
+	var _require5 = __webpack_require__(236);
 
 	var className = _require5.className;
 
-	var _require6 = __webpack_require__(236);
+	var _require6 = __webpack_require__(237);
 
 	var buildMenuItems = _require6.buildMenuItems;
 
 	exports.buildMenuItems = buildMenuItems;
 
-	var _require7 = __webpack_require__(237);
+	var _require7 = __webpack_require__(238);
 
 	var buildKeymap = _require7.buildKeymap;
 
@@ -33789,7 +33913,7 @@
 	exports.buildInputRules = buildInputRules;
 
 /***/ },
-/* 223 */
+/* 224 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -33800,13 +33924,13 @@
 	// this plugin.
 
 	;
-	var _require = __webpack_require__(224);
+	var _require = __webpack_require__(225);
 
 	exports.InputRule = _require.InputRule;
 	exports.inputRules = _require.inputRules;
 	exports.InputRules = _require.InputRules;
 
-	var _require2 = __webpack_require__(225);
+	var _require2 = __webpack_require__(226);
 
 	exports.emDash = _require2.emDash;
 	exports.ellipsis = _require2.ellipsis;
@@ -33817,7 +33941,7 @@
 	exports.smartQuotes = _require2.smartQuotes;
 	exports.allInputRules = _require2.allInputRules;
 
-	var _require3 = __webpack_require__(226);
+	var _require3 = __webpack_require__(227);
 
 	exports.wrappingInputRule = _require3.wrappingInputRule;
 	exports.textblockTypeInputRule = _require3.textblockTypeInputRule;
@@ -33829,7 +33953,7 @@
 	_require3;
 
 /***/ },
-/* 224 */
+/* 225 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -33838,7 +33962,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var _require = __webpack_require__(190);
+	var _require = __webpack_require__(191);
 
 	var Keymap = _require.Keymap;
 	var Plugin = _require.Plugin;
@@ -34009,12 +34133,12 @@
 	exports.inputRules = inputRules;
 
 /***/ },
-/* 225 */
+/* 226 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var _require = __webpack_require__(224);
+	var _require = __webpack_require__(225);
 
 	var InputRule = _require.InputRule;
 
@@ -34047,16 +34171,16 @@
 	exports.allInputRules = allInputRules;
 
 /***/ },
-/* 226 */
+/* 227 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var _require = __webpack_require__(224);
+	var _require = __webpack_require__(225);
 
 	var InputRule = _require.InputRule;
 
-	var _require2 = __webpack_require__(196);
+	var _require2 = __webpack_require__(197);
 
 	var findWrapping = _require2.findWrapping;
 	var joinable = _require2.joinable;
@@ -34163,7 +34287,7 @@
 	exports.headingRule = headingRule;
 
 /***/ },
-/* 227 */
+/* 228 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -34173,9 +34297,9 @@
 	var copyObj = _require.copyObj;
 
 
-	copyObj(__webpack_require__(228), exports);
-	exports.menuBar = __webpack_require__(230).menuBar;
-	exports.tooltipMenu = __webpack_require__(231).tooltipMenu;
+	copyObj(__webpack_require__(229), exports);
+	exports.menuBar = __webpack_require__(231).menuBar;
+	exports.tooltipMenu = __webpack_require__(232).tooltipMenu;
 
 	// !! This module defines a number of building blocks for ProseMirror
 	// menus, along with two menu styles, [`menubar`](#menuBar) and
@@ -34192,7 +34316,7 @@
 	// given editor state.
 
 /***/ },
-/* 228 */
+/* 229 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -34201,12 +34325,12 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var _require = __webpack_require__(193);
+	var _require = __webpack_require__(194);
 
 	var elt = _require.elt;
 	var insertCSS = _require.insertCSS;
 
-	var _require$commands = __webpack_require__(190).commands;
+	var _require$commands = __webpack_require__(191).commands;
 
 	var undo = _require$commands.undo;
 	var redo = _require$commands.redo;
@@ -34222,7 +34346,7 @@
 
 	var copyObj = _require2.copyObj;
 
-	var _require3 = __webpack_require__(229);
+	var _require3 = __webpack_require__(230);
 
 	var getIcon = _require3.getIcon;
 
@@ -34742,12 +34866,12 @@
 	insertCSS("\n\n.ProseMirror-textblock-dropdown {\n  min-width: 3em;\n}\n\n." + prefix + " {\n  margin: 0 -4px;\n  line-height: 1;\n}\n\n.ProseMirror-tooltip ." + prefix + " {\n  width: -webkit-fit-content;\n  width: fit-content;\n  white-space: pre;\n}\n\n." + prefix + "item {\n  margin-right: 3px;\n  display: inline-block;\n}\n\n." + prefix + "separator {\n  border-right: 1px solid #ddd;\n  margin-right: 3px;\n}\n\n." + prefix + "-dropdown, ." + prefix + "-dropdown-menu {\n  font-size: 90%;\n  white-space: nowrap;\n}\n\n." + prefix + "-dropdown {\n  padding: 1px 14px 1px 4px;\n  display: inline-block;\n  vertical-align: 1px;\n  position: relative;\n  cursor: pointer;\n}\n\n." + prefix + "-dropdown:after {\n  content: \"\";\n  border-left: 4px solid transparent;\n  border-right: 4px solid transparent;\n  border-top: 4px solid currentColor;\n  opacity: .6;\n  position: absolute;\n  right: 2px;\n  top: calc(50% - 2px);\n}\n\n." + prefix + "-dropdown-menu, ." + prefix + "-submenu {\n  position: absolute;\n  background: white;\n  color: #666;\n  border: 1px solid #aaa;\n  padding: 2px;\n}\n\n." + prefix + "-dropdown-menu {\n  z-index: 15;\n  min-width: 6em;\n}\n\n." + prefix + "-dropdown-item {\n  cursor: pointer;\n  padding: 2px 8px 2px 4px;\n}\n\n." + prefix + "-dropdown-item:hover {\n  background: #f2f2f2;\n}\n\n." + prefix + "-submenu-wrap {\n  position: relative;\n  margin-right: -4px;\n}\n\n." + prefix + "-submenu-label:after {\n  content: \"\";\n  border-top: 4px solid transparent;\n  border-bottom: 4px solid transparent;\n  border-left: 4px solid currentColor;\n  opacity: .6;\n  position: absolute;\n  right: 4px;\n  top: calc(50% - 4px);\n}\n\n." + prefix + "-submenu {\n  display: none;\n  min-width: 4em;\n  left: 100%;\n  top: -3px;\n}\n\n." + prefix + "-active {\n  background: #eee;\n  border-radius: 4px;\n}\n\n." + prefix + "-active {\n  background: #eee;\n  border-radius: 4px;\n}\n\n." + prefix + "-disabled {\n  opacity: .3;\n}\n\n." + prefix + "-submenu-wrap:hover ." + prefix + "-submenu, ." + prefix + "-submenu-wrap-active ." + prefix + "-submenu {\n  display: block;\n}\n");
 
 /***/ },
-/* 229 */
+/* 230 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var _require = __webpack_require__(193);
+	var _require = __webpack_require__(194);
 
 	var insertCSS = _require.insertCSS;
 
@@ -34805,7 +34929,7 @@
 	insertCSS("\n." + prefix + " {\n  display: inline-block;\n  line-height: .8;\n  vertical-align: -2px; /* Compensate for padding */\n  padding: 2px 8px;\n  cursor: pointer;\n}\n\n." + prefix + " svg {\n  fill: currentColor;\n  height: 1em;\n}\n\n." + prefix + " span {\n  vertical-align: text-top;\n}");
 
 /***/ },
-/* 230 */
+/* 231 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -34816,16 +34940,16 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var _require = __webpack_require__(190);
+	var _require = __webpack_require__(191);
 
 	var Plugin = _require.Plugin;
 
-	var _require2 = __webpack_require__(193);
+	var _require2 = __webpack_require__(194);
 
 	var elt = _require2.elt;
 	var insertCSS = _require2.insertCSS;
 
-	var _require3 = __webpack_require__(228);
+	var _require3 = __webpack_require__(229);
 
 	var renderGrouped = _require3.renderGrouped;
 
@@ -34977,7 +35101,7 @@
 	insertCSS("\n." + prefix + " {\n  border-top-left-radius: inherit;\n  border-top-right-radius: inherit;\n  position: relative;\n  min-height: 1em;\n  color: #666;\n  padding: 1px 6px;\n  top: 0; left: 0; right: 0;\n  border-bottom: 1px solid silver;\n  background: white;\n  z-index: 10;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  overflow: visible;\n}\n");
 
 /***/ },
-/* 231 */
+/* 232 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -34986,20 +35110,20 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var _require = __webpack_require__(190);
+	var _require = __webpack_require__(191);
 
 	var Plugin = _require.Plugin;
 
-	var _require2 = __webpack_require__(193);
+	var _require2 = __webpack_require__(194);
 
 	var elt = _require2.elt;
 	var insertCSS = _require2.insertCSS;
 
-	var _require3 = __webpack_require__(232);
+	var _require3 = __webpack_require__(233);
 
 	var Tooltip = _require3.Tooltip;
 
-	var _require4 = __webpack_require__(228);
+	var _require4 = __webpack_require__(229);
 
 	var renderGrouped = _require4.renderGrouped;
 
@@ -35242,7 +35366,7 @@
 	insertCSS("\n\n." + classPrefix + "-linktext a {\n  color: #444;\n  text-decoration: none;\n  padding: 0 5px;\n}\n\n." + classPrefix + "-linktext a:hover {\n  text-decoration: underline;\n}\n\n");
 
 /***/ },
-/* 232 */
+/* 233 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -35252,8 +35376,8 @@
 	var copyObj = _require.copyObj;
 
 
-	copyObj(__webpack_require__(233), exports);
-	exports.Tooltip = __webpack_require__(234).Tooltip;
+	copyObj(__webpack_require__(234), exports);
+	exports.Tooltip = __webpack_require__(235).Tooltip;
 
 	// !! This module implements some GUI primitives.
 	//
@@ -35262,7 +35386,7 @@
 	// system (or submit patches to improve this implementation).
 
 /***/ },
-/* 233 */
+/* 234 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -35275,7 +35399,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var _require = __webpack_require__(193);
+	var _require = __webpack_require__(194);
 
 	var elt = _require.elt;
 	var insertCSS = _require.insertCSS;
@@ -35595,7 +35719,7 @@
 	insertCSS("\n.ProseMirror-prompt {\n  background: white;\n  padding: 2px 6px 2px 15px;\n  border: 1px solid silver;\n  position: absolute;\n  border-radius: 3px;\n  z-index: 11;\n}\n\n.ProseMirror-prompt h5 {\n  margin: 0;\n  font-weight: normal;\n  font-size: 100%;\n  color: #444;\n}\n\n.ProseMirror-prompt input[type=\"text\"],\n.ProseMirror-prompt textarea {\n  background: #eee;\n  border: none;\n  outline: none;\n}\n\n.ProseMirror-prompt input[type=\"text\"] {\n  padding: 0 4px;\n}\n\n.ProseMirror-prompt-close {\n  position: absolute;\n  left: 2px; top: 1px;\n  color: #666;\n  border: none; background: transparent; padding: 0;\n}\n\n.ProseMirror-prompt-close:after {\n  content: \"✕\";\n  font-size: 12px;\n}\n\n.ProseMirror-invalid {\n  background: #ffc;\n  border: 1px solid #cc7;\n  border-radius: 4px;\n  padding: 5px 10px;\n  position: absolute;\n  min-width: 10em;\n}\n\n.ProseMirror-prompt-buttons {\n  margin-top: 5px;\n  display: none;\n}\n\n");
 
 /***/ },
-/* 234 */
+/* 235 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -35604,7 +35728,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var _require = __webpack_require__(193);
+	var _require = __webpack_require__(194);
 
 	var elt = _require.elt;
 	var insertCSS = _require.insertCSS;
@@ -35779,12 +35903,12 @@
 	insertCSS("\n\n." + prefix + " {\n  position: absolute;\n  display: none;\n  box-sizing: border-box;\n  -moz-box-sizing: border- box;\n  overflow: hidden;\n\n  -webkit-transition: width 0.4s ease-out, height 0.4s ease-out, left 0.4s ease-out, top 0.4s ease-out, opacity 0.2s;\n  -moz-transition: width 0.4s ease-out, height 0.4s ease-out, left 0.4s ease-out, top 0.4s ease-out, opacity 0.2s;\n  transition: width 0.4s ease-out, height 0.4s ease-out, left 0.4s ease-out, top 0.4s ease-out, opacity 0.2s;\n  opacity: 0;\n\n  border-radius: 5px;\n  padding: 3px 7px;\n  margin: 0;\n  background: white;\n  border: 1px solid #777;\n  color: #555;\n\n  z-index: 11;\n}\n\n." + prefix + "-pointer {\n  position: absolute;\n  display: none;\n  width: 0; height: 0;\n\n  -webkit-transition: left 0.4s ease-out, top 0.4s ease-out, opacity 0.2s;\n  -moz-transition: left 0.4s ease-out, top 0.4s ease-out, opacity 0.2s;\n  transition: left 0.4s ease-out, top 0.4s ease-out, opacity 0.2s;\n  opacity: 0;\n\n  z-index: 12;\n}\n\n." + prefix + "-pointer:after {\n  content: \"\";\n  position: absolute;\n  display: block;\n}\n\n." + prefix + "-pointer-above {\n  border-left: 6px solid transparent;\n  border-right: 6px solid transparent;\n  border-top: 6px solid #777;\n}\n\n." + prefix + "-pointer-above:after {\n  border-left: 6px solid transparent;\n  border-right: 6px solid transparent;\n  border-top: 6px solid white;\n  left: -6px; top: -7px;\n}\n\n." + prefix + "-pointer-below {\n  border-left: 6px solid transparent;\n  border-right: 6px solid transparent;\n  border-bottom: 6px solid #777;\n}\n\n." + prefix + "-pointer-below:after {\n  border-left: 6px solid transparent;\n  border-right: 6px solid transparent;\n  border-bottom: 6px solid white;\n  left: -6px; top: 1px;\n}\n\n." + prefix + "-pointer-right {\n  border-top: 6px solid transparent;\n  border-bottom: 6px solid transparent;\n  border-right: 6px solid #777;\n}\n\n." + prefix + "-pointer-right:after {\n  border-top: 6px solid transparent;\n  border-bottom: 6px solid transparent;\n  border-right: 6px solid white;\n  left: 1px; top: -6px;\n}\n\n." + prefix + "-pointer-left {\n  border-top: 6px solid transparent;\n  border-bottom: 6px solid transparent;\n  border-left: 6px solid #777;\n}\n\n." + prefix + "-pointer-left:after {\n  border-top: 6px solid transparent;\n  border-bottom: 6px solid transparent;\n  border-left: 6px solid white;\n  left: -7px; top: -6px;\n}\n\n." + prefix + " input[type=\"text\"],\n." + prefix + " textarea {\n  background: #eee;\n  border: none;\n  outline: none;\n}\n\n." + prefix + " input[type=\"text\"] {\n  padding: 0 4px;\n}\n\n");
 
 /***/ },
-/* 235 */
+/* 236 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var _require = __webpack_require__(193);
+	var _require = __webpack_require__(194);
 
 	var insertCSS = _require.insertCSS;
 
@@ -35796,12 +35920,12 @@
 	insertCSS("\n\n/* Add space around the hr to make clicking it easier */\n\n" + scope + " hr {\n  position: relative;\n  height: 6px;\n  border: none;\n}\n\n" + scope + " hr:after {\n  content: \"\";\n  position: absolute;\n  left: 10px;\n  right: 10px;\n  top: 2px;\n  border-top: 2px solid silver;\n}\n\n" + scope + " img {\n  cursor: default;\n}\n\n");
 
 /***/ },
-/* 236 */
+/* 237 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var _require = __webpack_require__(172);
+	var _require = __webpack_require__(188);
 
 	var StrongMark = _require.StrongMark;
 	var EmMark = _require.EmMark;
@@ -35816,7 +35940,7 @@
 	var CodeBlock = _require.CodeBlock;
 	var HorizontalRule = _require.HorizontalRule;
 
-	var _require2 = __webpack_require__(227);
+	var _require2 = __webpack_require__(228);
 
 	var toggleMarkItem = _require2.toggleMarkItem;
 	var insertItem = _require2.insertItem;
@@ -35832,7 +35956,7 @@
 	var wrapListItem = _require2.wrapListItem;
 	var icons = _require2.icons;
 
-	var _require3 = __webpack_require__(232);
+	var _require3 = __webpack_require__(233);
 
 	var FieldPrompt = _require3.FieldPrompt;
 	var TextField = _require3.TextField;
@@ -36012,14 +36136,14 @@
 	exports.buildMenuItems = buildMenuItems;
 
 /***/ },
-/* 237 */
+/* 238 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var Keymap = __webpack_require__(207);
+	var Keymap = __webpack_require__(208);
 
-	var _require = __webpack_require__(172);
+	var _require = __webpack_require__(188);
 
 	var HardBreak = _require.HardBreak;
 	var BulletList = _require.BulletList;
@@ -36034,9 +36158,9 @@
 	var EmMark = _require.EmMark;
 	var CodeMark = _require.CodeMark;
 
-	var browser = __webpack_require__(208);
+	var browser = __webpack_require__(209);
 
-	var _require$commands = __webpack_require__(190).commands;
+	var _require$commands = __webpack_require__(191).commands;
 
 	var wrapIn = _require$commands.wrapIn;
 	var setBlockType = _require$commands.setBlockType;
@@ -36123,6 +36247,131 @@
 	  return new Keymap(keys);
 	}
 	exports.buildKeymap = buildKeymap;
+
+/***/ },
+/* 239 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = __webpack_require__(240);
+
+/***/ },
+/* 240 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(process) {/**
+	 * Copyright 2013-present, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule update
+	 */
+
+	/* global hasOwnProperty:true */
+
+	'use strict';
+
+	var _prodInvariant = __webpack_require__(7),
+	    _assign = __webpack_require__(4);
+
+	var keyOf = __webpack_require__(24);
+	var invariant = __webpack_require__(8);
+	var hasOwnProperty = {}.hasOwnProperty;
+
+	function shallowCopy(x) {
+	  if (Array.isArray(x)) {
+	    return x.concat();
+	  } else if (x && typeof x === 'object') {
+	    return _assign(new x.constructor(), x);
+	  } else {
+	    return x;
+	  }
+	}
+
+	var COMMAND_PUSH = keyOf({ $push: null });
+	var COMMAND_UNSHIFT = keyOf({ $unshift: null });
+	var COMMAND_SPLICE = keyOf({ $splice: null });
+	var COMMAND_SET = keyOf({ $set: null });
+	var COMMAND_MERGE = keyOf({ $merge: null });
+	var COMMAND_APPLY = keyOf({ $apply: null });
+
+	var ALL_COMMANDS_LIST = [COMMAND_PUSH, COMMAND_UNSHIFT, COMMAND_SPLICE, COMMAND_SET, COMMAND_MERGE, COMMAND_APPLY];
+
+	var ALL_COMMANDS_SET = {};
+
+	ALL_COMMANDS_LIST.forEach(function (command) {
+	  ALL_COMMANDS_SET[command] = true;
+	});
+
+	function invariantArrayCase(value, spec, command) {
+	  !Array.isArray(value) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'update(): expected target of %s to be an array; got %s.', command, value) : _prodInvariant('1', command, value) : void 0;
+	  var specValue = spec[command];
+	  !Array.isArray(specValue) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'update(): expected spec of %s to be an array; got %s. Did you forget to wrap your parameter in an array?', command, specValue) : _prodInvariant('2', command, specValue) : void 0;
+	}
+
+	/**
+	 * Returns a updated shallow copy of an object without mutating the original.
+	 * See https://facebook.github.io/react/docs/update.html for details.
+	 */
+	function update(value, spec) {
+	  !(typeof spec === 'object') ? process.env.NODE_ENV !== 'production' ? invariant(false, 'update(): You provided a key path to update() that did not contain one of %s. Did you forget to include {%s: ...}?', ALL_COMMANDS_LIST.join(', '), COMMAND_SET) : _prodInvariant('3', ALL_COMMANDS_LIST.join(', '), COMMAND_SET) : void 0;
+
+	  if (hasOwnProperty.call(spec, COMMAND_SET)) {
+	    !(Object.keys(spec).length === 1) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Cannot have more than one key in an object with %s', COMMAND_SET) : _prodInvariant('4', COMMAND_SET) : void 0;
+
+	    return spec[COMMAND_SET];
+	  }
+
+	  var nextValue = shallowCopy(value);
+
+	  if (hasOwnProperty.call(spec, COMMAND_MERGE)) {
+	    var mergeObj = spec[COMMAND_MERGE];
+	    !(mergeObj && typeof mergeObj === 'object') ? process.env.NODE_ENV !== 'production' ? invariant(false, 'update(): %s expects a spec of type \'object\'; got %s', COMMAND_MERGE, mergeObj) : _prodInvariant('5', COMMAND_MERGE, mergeObj) : void 0;
+	    !(nextValue && typeof nextValue === 'object') ? process.env.NODE_ENV !== 'production' ? invariant(false, 'update(): %s expects a target of type \'object\'; got %s', COMMAND_MERGE, nextValue) : _prodInvariant('6', COMMAND_MERGE, nextValue) : void 0;
+	    _assign(nextValue, spec[COMMAND_MERGE]);
+	  }
+
+	  if (hasOwnProperty.call(spec, COMMAND_PUSH)) {
+	    invariantArrayCase(value, spec, COMMAND_PUSH);
+	    spec[COMMAND_PUSH].forEach(function (item) {
+	      nextValue.push(item);
+	    });
+	  }
+
+	  if (hasOwnProperty.call(spec, COMMAND_UNSHIFT)) {
+	    invariantArrayCase(value, spec, COMMAND_UNSHIFT);
+	    spec[COMMAND_UNSHIFT].forEach(function (item) {
+	      nextValue.unshift(item);
+	    });
+	  }
+
+	  if (hasOwnProperty.call(spec, COMMAND_SPLICE)) {
+	    !Array.isArray(value) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected %s target to be an array; got %s', COMMAND_SPLICE, value) : _prodInvariant('7', COMMAND_SPLICE, value) : void 0;
+	    !Array.isArray(spec[COMMAND_SPLICE]) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'update(): expected spec of %s to be an array of arrays; got %s. Did you forget to wrap your parameters in an array?', COMMAND_SPLICE, spec[COMMAND_SPLICE]) : _prodInvariant('8', COMMAND_SPLICE, spec[COMMAND_SPLICE]) : void 0;
+	    spec[COMMAND_SPLICE].forEach(function (args) {
+	      !Array.isArray(args) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'update(): expected spec of %s to be an array of arrays; got %s. Did you forget to wrap your parameters in an array?', COMMAND_SPLICE, spec[COMMAND_SPLICE]) : _prodInvariant('8', COMMAND_SPLICE, spec[COMMAND_SPLICE]) : void 0;
+	      nextValue.splice.apply(nextValue, args);
+	    });
+	  }
+
+	  if (hasOwnProperty.call(spec, COMMAND_APPLY)) {
+	    !(typeof spec[COMMAND_APPLY] === 'function') ? process.env.NODE_ENV !== 'production' ? invariant(false, 'update(): expected spec of %s to be a function; got %s.', COMMAND_APPLY, spec[COMMAND_APPLY]) : _prodInvariant('9', COMMAND_APPLY, spec[COMMAND_APPLY]) : void 0;
+	    nextValue = spec[COMMAND_APPLY](nextValue);
+	  }
+
+	  for (var k in spec) {
+	    if (!(ALL_COMMANDS_SET.hasOwnProperty(k) && ALL_COMMANDS_SET[k])) {
+	      nextValue[k] = update(value[k], spec[k]);
+	    }
+	  }
+
+	  return nextValue;
+	}
+
+	module.exports = update;
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }
 /******/ ]);
