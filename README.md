@@ -1,6 +1,6 @@
 # Pad
 
-Pad is an in-browser text editor.
+Pad is an in-browser notes editor.
 
 ## Local development
 
