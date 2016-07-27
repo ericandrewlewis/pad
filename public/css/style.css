@@ -25,5 +25,15 @@
 }
 
 .ProseMirror-content {
-    padding: 15px;
+  padding: 0 15px;
+}
+
+.ProseMirror-menubar {
+  padding: 10px;
+}
+
+[contenteditable="true"]:active,
+[contenteditable="true"]:focus {
+  border:none;
+  outline:none;
 }
