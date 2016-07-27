@@ -3,7 +3,7 @@ import {findDOMNode} from 'react-dom';
 import prosemirror from 'prosemirror'
 import {schema} from 'prosemirror/dist/schema-basic';
 import {exampleSetup, buildMenuItems} from "prosemirror/dist/example-setup"
-import {tooltipMenu, menuBar} from "prosemirror/dist/menu"
+import {menuBar} from "prosemirror/dist/menu"
 
 var {any, func, bool, string, oneOf} = PropTypes;
 
@@ -24,16 +24,13 @@ export default class Editor extends Component {
         place: this.editorNode,
         doc: schema.nodeFromJSON(doc),
         schema: schema,
-        plugins: [exampleSetup.config({menuBar: false, tooltipMenu: false})]
+        plugins: [exampleSetup.config({menuBar: false})]
       }
     );
 
     this.menu = buildMenuItems(schema)
 
     menuBar.config({float: true, content: this.menu.fullMenu}).attach(this.editor)
-    tooltipMenu.config({selectedBlockMenu: true,
-                        inlineContent: this.menu.inlineMenu,
-                        blockContent: this.menu.blockMenu}).attach(this.editor)
 
     this.editor.on.change.add(this.onChange);
     this.editor.on.selectionChange.add(this.onSelectionChange);
