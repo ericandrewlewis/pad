@@ -21,4 +21,9 @@ app.get('/', (req, res) => {
     res.render('index', {scriptUrl: scriptUrl})
 })
 
+app.get('/service-worker.js', (req, res) => {
+  res.sendFile(__dirname + '/public/service-worker.js');
+})
+
 app.listen(PORT)
+process.stdout.write("Express listening on " + PORT)
