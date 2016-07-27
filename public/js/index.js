@@ -26170,11 +26170,11 @@
 	        _react2.default.createElement(
 	          "h2",
 	          null,
-	          "Pages",
+	          "Notes",
 	          _react2.default.createElement(
 	            "button",
 	            { onClick: this.props.onClickCreateNew, style: { marginLeft: '10px' } },
-	            "New Page"
+	            "Create a note"
 	          )
 	        ),
 	        pageListItems

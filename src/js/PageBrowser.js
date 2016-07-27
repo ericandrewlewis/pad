@@ -37,7 +37,7 @@ export default class PageBrowser extends Component {
       return <PageListItem selected={selected} onClick={this.props.onClickPage.bind(this, index)} key={index} doc={page} />
     })
     return (<div className="page-browser">
-      <h2>Pages<button onClick={this.props.onClickCreateNew} style={{marginLeft: '10px'}}>New Page</button></h2>
+      <h2>Notes<button onClick={this.props.onClickCreateNew} style={{marginLeft: '10px'}}>Create a note</button></h2>
       {pageListItems}
     </div>)
   }
