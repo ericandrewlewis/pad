@@ -2,7 +2,7 @@ import React, {Component, PropTypes} from "react";
 import ReactDOM from 'react-dom';
 import {schema} from 'prosemirror/dist/schema-basic';
 import PageBrowser from "./PageBrowser";
-import Editor from "./editor";
+import Editor from "./Editor";
 
 var {number, string} = PropTypes;
 const style = {
