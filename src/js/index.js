@@ -4,6 +4,7 @@ import {schema} from './editor-schema';
 import PageBrowser from "./PageBrowser";
 import Editor from "./Editor";
 import update from 'react-addons-update'
+import axios from 'axios'
 
 var {number, string} = PropTypes;
 const style = {
@@ -36,7 +37,19 @@ class App extends Component {
     this.setCurrentDocument = this.setCurrentDocument.bind(this)
   }
 
+  getPages() {
+    axios.get('/docs')
+      .then((response) => {
+        this.setState({
+          pages: response.data
+        })
+      }).catch((error) => {
+        console.log(error)
+      })
+  }
+
   componentWillMount() {
+    this.getPages()
     this.setState({doc: undefined, selection: undefined});
   }
 
