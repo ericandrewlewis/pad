@@ -6,7 +6,7 @@ html {
   box-sizing: inherit;
 }
 
-.page-browser {
+.note-browser {
   position: absolute;
   width: 350px;
 }
@@ -25,13 +25,13 @@ button {
   border-left: 1px solid silver;
 }
 
-.page-browser h2 {
+.note-browser h2 {
   margin: 0;
   padding: 15px;
   border-bottom: 1px solid silver;
 }
 
-.page-list-item {
+.note-list-item {
   height: 68px;
   border-bottom: 1px solid silver;
   padding: 15px;
@@ -40,23 +40,23 @@ button {
   overflow: hidden;
   cursor: pointer;
 }
-.page-list-item:hover {
+.note-list-item:hover {
   background-color: #faf7f2;
 }
 
-.page-list-item:hover:before {
+.note-list-item:hover:before {
   border-color: #faf7f2;
 }
 
-.page-list-item.selected {
+.note-list-item.selected {
   background-color: #f2f0ed;
 }
 
-.page-list-item.selected:before {
+.note-list-item.selected:before {
   border-color: #f2f0ed;
 }
 
-.page-list-item:before {
+.note-list-item:before {
   content: " ";
   position: absolute;
   z-index: 1;

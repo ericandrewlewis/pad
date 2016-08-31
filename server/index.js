@@ -4,6 +4,7 @@ let express = require('express');
 let mustacheExpress = require('mustache-express');
 let mongoose = require('mongoose');
 let Document = require('./model/Document')
+let path = require('path')
 // Let mongoose use the native Nodejs Promise implementatoin.
 mongoose.Promise = global.Promise
 
@@ -24,7 +25,9 @@ let app = express();
 // Register '.mustache' extension with The Mustache Express
 app.engine('mustache', mustacheExpress());
 
+app.use('/public', express.static(path.join(__dirname, '/../public')))
 app.set('view engine', 'mustache');
+app.set('views', path.join(__dirname, '/mustache-views'))
 
 app.get('/', (req, res) => {
     let scriptUrl = 'http://localhost:3333/public/js/index.js'

@@ -1,10 +1,14 @@
 import React, {Component, PropTypes} from "react";
 import ReactDOM from 'react-dom';
+import prosemirror from 'prosemirror'
 import {schema} from './editor-schema';
+import {exampleSetup, buildMenuItems} from "prosemirror/dist/example-setup"
+import {menuBar} from "prosemirror/dist/menu"
 import PageBrowser from "./PageBrowser";
 import Editor from "./Editor";
 import update from 'react-addons-update'
 import axios from 'axios'
+import collabPlugin from './collab'
 
 var {number, string} = PropTypes;
 const style = {
@@ -12,45 +16,73 @@ const style = {
   minHeight: '200px'
 };
 
+const nodeToText = (node) => {
+  let text = ''
+
+  if (node.content && node.content.childCount) {
+     node.content.forEach((_node) => {
+       text += " " + nodeToText(_node)
+     })
+  }
+  if (node.text) {
+    return node.text
+  }
+  return text
+}
+
+const truncateString = (string, truncateTo) => {
+  let newString
+  if (string.length > truncateTo) {
+    newString = doc.substring(0, truncateTo)
+  } else {
+    newString = string
+  }
+  return newString
+}
+
+let createNewNote = () => {
+  return schema.nodes.doc.create({ id: new Date().getTime() },
+    schema.nodes.paragraph.create({},
+      schema.nodes.text.create({}, 'Write here.')
+    )
+  )
+}
+
+let notes
+if (localStorage.getItem("padContent")) {
+  notes = JSON.parse(localStorage.getItem("padContent"))
+} else {
+  notes = [createNewNote()]
+}
+
 class App extends Component {
   constructor() {
     super()
-
-    let pages
-    if (localStorage.getItem("padContent")) {
-      pages = JSON.parse(localStorage.getItem("padContent"))
-    } else {
-      let doc = schema.nodes.doc.create( {id: new Date().getTime()},
-        schema.nodes.paragraph.create( {},
-          schema.nodes.text.create({}, 'Write here.')
-        )
-      ).toJSON()
-      pages = [doc]
-    }
     this.state = {
-      pages: pages,
-      currentPageIndex: 0,
-      selection: undefined
+      selectedNoteIndex: 0
     }
     this.onChange = this.onChange.bind(this)
     this.createNewPage = this.createNewPage.bind(this)
     this.setCurrentDocument = this.setCurrentDocument.bind(this)
   }
 
-  getPages() {
+  getNotes() {
     axios.get('/docs')
       .then((response) => {
-        this.setState({
-          pages: response.data
-        })
+        if (response.status === 200) {
+          notes = response.data.map((note) => {
+            schema.nodes.doc.create( {id: note.id}, note.content )
+          })
+        } else {
+          console.log('non-200 status from get notes')
+        }
       }).catch((error) => {
         console.log(error)
       })
   }
 
   componentWillMount() {
-    this.getPages()
-    this.setState({doc: undefined, selection: undefined});
+    // this.getNotes()
   }
 
   onChange(doc, selection) {
@@ -80,17 +112,30 @@ class App extends Component {
     this.setState({currentPageIndex: index})
   }
 
+  componentDidMount() {
+    this.editor = window.pm = new prosemirror.ProseMirror({
+        place: this.editorNode,
+        doc: notes[0],
+        schema: schema,
+        plugins: [exampleSetup.config({menuBar: false}), collabPlugin]
+      }
+    );
+    this.menu = buildMenuItems(schema)
+    menuBar.config({float: true, content: this.menu.fullMenu}).attach(this.editor)
+  }
+
   render() {
-    const {pages, currentPageIndex, selection} = this.state;
-    let doc = pages[currentPageIndex];
+    const {currentPageIndex} = this.state;
+    const notesTruncated = notes.map((note) => truncateString(nodeToText(note), 300))
     return (
       <div>
         <PageBrowser currentPageIndex={currentPageIndex}
-                     pages={pages}
+                     notes={notesTruncated}
                      onClickCreateNew={this.createNewPage}
-                     onClickPage={this.setCurrentDocument}
+                     onClickNote={this.setCurrentDocument}
                      currentPageIndex={currentPageIndex} />
-        <Editor style={style} onChange={this.onChange} doc={doc} selection={selection}/>
+        <div className="editor"
+             ref={(ref) => this.editorNode = ref} />
       </div>
     );
   }
